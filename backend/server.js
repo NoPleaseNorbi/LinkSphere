@@ -2,20 +2,13 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 
-const app = express();
+const jiraRoutes = require("./routes/jiraRoutes");
 
-// Middleware
+const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Routes
-const userRoutes = require("./routes/userRoutes");
-app.use("/api/users", userRoutes);
+app.use("/api/jira", jiraRoutes);
 
-app.get("/", (req, res) => {
-  res.send("Backend running!");
-});
-
-// Start server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
