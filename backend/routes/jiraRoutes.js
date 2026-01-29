@@ -4,5 +4,6 @@ const JiraController = require("../controllers/jiraController");
 
 router.get("/projects", JiraController.getProjects);
 router.get("/issue/:issueId", JiraController.getIssue);
+router.get("/project/:projectKey/issues", JiraController.getProjectIssues);
 
 module.exports = router;
