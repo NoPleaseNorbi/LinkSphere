@@ -12,8 +12,9 @@ import {
   CircularProgress,
   Alert,
   Button,
+  CardActionArea,
 } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
@@ -24,6 +25,7 @@ const TYPE_COLORS = {
 };
 
 const Projects = () => {
+  const navigate = useNavigate();
   const [projects, setProjects] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
@@ -54,7 +56,12 @@ const Projects = () => {
   React.useEffect(() => {
     fetchProjects();
   }, []);
- 
+
+  const handleProjectClick = (projectId) => {
+    navigate(`/project/${projectId}/graph`);
+  };
+
+  // ─── Loading ────────────────────────────────────────────
   if (loading) {
     return (
       <Container maxWidth="lg">
@@ -66,6 +73,7 @@ const Projects = () => {
     );
   }
 
+  // ─── Error ──────────────────────────────────────────────
   if (error) {
     return (
       <Container maxWidth="lg">
@@ -91,6 +99,7 @@ const Projects = () => {
     );
   }
 
+  // ─── Empty ──────────────────────────────────────────────
   if (projects.length === 0) {
     return (
       <Container maxWidth="lg">
@@ -106,6 +115,7 @@ const Projects = () => {
     );
   }
 
+  // ─── Projects ───────────────────────────────────────────
   return (
     <Container maxWidth="lg">
       <Box sx={{ my: 6 }}>
@@ -119,62 +129,67 @@ const Projects = () => {
         </Box>
 
         <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-          {projects.length} project{projects.length !== 1 ? 's' : ''} found
+          {projects.length} project{projects.length !== 1 ? 's' : ''} found — Click on a project to visualize its graph
         </Typography>
 
         <Grid container spacing={3}>
           {projects.map((project) => (
-            <Grid item xs={12} sm={6} md={4} key={project.id}>
+            <Grid key={project.id}>
               <Card
                 elevation={2}
                 sx={{
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
-                  transition: 'box-shadow 0.2s',
-                  '&:hover': { boxShadow: 4 },
+                  transition: 'box-shadow 0.2s, transform 0.2s',
+                  '&:hover': { 
+                    boxShadow: 6,
+                    transform: 'translateY(-4px)',
+                  },
                 }}
               >
-                <CardHeader
-                  avatar={
-                    project.avatarUrls?.['24x24'] ? (
-                      <Avatar src={project.avatarUrls['24x24']} alt={project.name} />
-                    ) : (
-                      <Avatar sx={{ bgcolor: 'primary.main' }}>
-                        <FolderOpenIcon />
-                      </Avatar>
-                    )
-                  }
-                  title={
-                    <Typography variant="h6" component="span" sx={{ fontWeight: 600 }}>
-                      {project.name}
-                    </Typography>
-                  }
-                  subheader={
-                    <Typography variant="body2" color="text.secondary" component="span">
-                      {project.key}
-                    </Typography>
-                  }
-                />
+                <CardActionArea onClick={() => handleProjectClick(project.key)} sx={{ flexGrow: 1 }}>
+                  <CardHeader
+                    avatar={
+                      project.avatarUrls?.['24x24'] ? (
+                        <Avatar src={project.avatarUrls['24x24']} alt={project.name} />
+                      ) : (
+                        <Avatar sx={{ bgcolor: 'primary.main' }}>
+                          <FolderOpenIcon />
+                        </Avatar>
+                      )
+                    }
+                    title={
+                      <Typography variant="h6" component="span" sx={{ fontWeight: 600 }}>
+                        {project.name}
+                      </Typography>
+                    }
+                    subheader={
+                      <Typography variant="body2" color="text.secondary" component="span">
+                        {project.key}
+                      </Typography>
+                    }
+                  />
 
-                <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                  {project.projectTypeKey && (
-                    <Chip
-                      label={project.projectTypeKey.charAt(0).toUpperCase() + project.projectTypeKey.slice(1)}
-                      color={TYPE_COLORS[project.projectTypeKey] || 'default'}
-                      size="small"
-                      sx={{ alignSelf: 'flex-start' }}
-                    />
-                  )}
+                  <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                    {project.projectTypeKey && (
+                      <Chip
+                        label={project.projectTypeKey.charAt(0).toUpperCase() + project.projectTypeKey.slice(1)}
+                        color={TYPE_COLORS[project.projectTypeKey] || 'default'}
+                        size="small"
+                        sx={{ alignSelf: 'flex-start' }}
+                      />
+                    )}
 
-                  {project.description && (
-                    <Typography variant="body2" color="text.secondary">
-                      {project.description.length > 120
-                        ? project.description.slice(0, 120) + '...'
-                        : project.description}
-                    </Typography>
-                  )}
-                </CardContent>
+                    {project.description && (
+                      <Typography variant="body2" color="text.secondary">
+                        {project.description.length > 120
+                          ? project.description.slice(0, 120) + '...'
+                          : project.description}
+                      </Typography>
+                    )}
+                  </CardContent>
+                </CardActionArea>
               </Card>
             </Grid>
           ))}

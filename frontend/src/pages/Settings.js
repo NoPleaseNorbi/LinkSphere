@@ -67,75 +67,114 @@ const Settings = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!validateInputs()) {
+  e.preventDefault();
+  
+  if (!validateInputs()) {
+    return;
+  }
+
+  setLoading(true);
+  setError('');
+
+  try {
+    const saveRes = await fetch('http://localhost:5000/api/jira/credentials', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: credentials.email,
+        apiToken: credentials.apiToken,
+        domain: credentials.domain
+      })
+    });
+
+    if (!saveRes.ok) {
+      const saveData = await saveRes.json();
+      setDialogData({
+        success: false,
+        message: saveData.error || 'Failed to save credentials.',
+        projectCount: 0
+      });
+      setDialogOpen(true);
       return;
     }
 
-    setLoading(true);
-    setError('');
+    // Fetch projects to verify the credentials work
+    const projectsRes = await fetch('http://localhost:5000/api/jira/projects');
+    const projects = await projectsRes.json();
+    console.log("Fetched projects:", projects);
 
+    if (!projectsRes.ok) {
+      setDialogData({
+        success: false,
+        message: projects.error || 'Credentials saved, but failed to fetch projects.',
+        projectCount: 0
+      });
+      setDialogOpen(true);
+      return;
+    }
+
+    // Save all projects to Neo4j
     try {
-      // Step 1: Save credentials to DB
-      const saveRes = await fetch('http://localhost:5000/api/jira/credentials', {
+      const saveProjectsRes = await fetch('http://localhost:5000/api/jira/projects/save-all', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: credentials.email,
-          apiToken: credentials.apiToken,
-          domain: credentials.domain
-        })
+        headers: { 'Content-Type': 'application/json' }
       });
 
-      if (!saveRes.ok) {
-        const saveData = await saveRes.json();
+      if (!saveProjectsRes.ok) {
+        const errorData = await saveProjectsRes.json();
         setDialogData({
           success: false,
-          message: saveData.error || 'Failed to save credentials.',
-          projectCount: 0
+          message: `Connected successfully (${projects.length} projects found), but failed to import to Neo4j: ${errorData.error}`,
+          projectCount: projects.length
         });
         setDialogOpen(true);
         return;
       }
 
-      // Step 2: Fetch projects to verify the credentials work
-      const projectsRes = await fetch('http://localhost:5000/api/jira/projects');
-      const projects = await projectsRes.json();
-
-      if (projectsRes.ok) {
-        setDialogData({
-          success: true,
-          message: projects.length > 0
-            ? `Successfully connected! Found ${projects.length} project(s).`
-            : 'Successfully connected, but no projects were found.',
-          projectCount: projects.length
-        });
-      } else {
-        setDialogData({
-          success: false,
-          message: projects.error || 'Credentials saved, but failed to fetch projects.',
-          projectCount: 0
-        });
-      }
-
-      setDialogOpen(true);
-    } catch (err) {
-      console.error('Fetch error:', err);
+      const projectsData = await saveProjectsRes.json();
+      
       setDialogData({
-        success: false,
-        message: 'Failed to connect to server. Please make sure the backend is running.',
-        projectCount: 0
+        success: true,
+        message: projects.length > 0
+          ? `Successfully connected and imported to Neo4j! Found ${projects.length} project(s), saved ${projectsData.stats.totalIssues} issues and ${projectsData.stats.totalUsers} users.`
+          : 'Successfully connected, but no projects were found.',
+        projectCount: projects.length,
+        neo4jStats: {
+          projectsProcessed: projectsData.stats.projectsProcessed,
+          totalIssues: projectsData.stats.totalIssues,
+          totalUsers: projectsData.stats.totalUsers,
+          errors: projectsData.stats.errors.length
+        }
       });
       setDialogOpen(true);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const handleCloseDialog = () => {
-    setDialogOpen(false);
-  };
+    } catch (neo4jError) {
+      console.error('Neo4j import error:', neo4jError);
+      setDialogData({
+        success: false,
+        message: `Connected successfully (${projects.length} projects found), but failed to import to Neo4j: ${neo4jError.message}`,
+        projectCount: projects.length
+      });
+      setDialogOpen(true);
+    }
+
+  } catch (err) {
+    console.error('Fetch error:', err);
+    setDialogData({
+      success: false,
+      message: 'Failed to connect to server. Please make sure the backend is running.',
+      projectCount: 0
+    });
+    setDialogOpen(true);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleCloseDialog = () => {
+  setDialogOpen(false);
+};
+
 
   return (
     <Container maxWidth="md">
@@ -169,7 +208,7 @@ const Settings = () => {
               type="email"
               value={credentials.email}
               onChange={handleChange}
-              placeholder="your.email@company.com"
+              placeholder="your.email@gmail.com"
               margin="normal"
               required
               disabled={loading}

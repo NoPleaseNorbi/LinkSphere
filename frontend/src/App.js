@@ -7,6 +7,7 @@ import About from './pages/About';
 import Documentation from './pages/Documentation';
 import Settings from './pages/Settings';
 import Projects from './pages/Projects';
+import ProjectGraph from './pages/Projectgraph';
 
 const theme = createTheme({
   palette: {
@@ -31,6 +32,7 @@ function App() {
           <Route path="/documentation" element={<Documentation />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/projects" element={<Projects />} />
+          <Route path="/project/:projectId/graph" element={<ProjectGraph />} />
         </Routes>
       </Router>
     </ThemeProvider>
