@@ -10,6 +10,6 @@ router.post("/credentials", saveCredentials);
 
 router.get("/projects", getProjects);
 
-router.post("/project/:projectKey/save", saveProjectGraph);
+router.post("/project/save-graph", saveProjectGraph);
 
 module.exports = router;

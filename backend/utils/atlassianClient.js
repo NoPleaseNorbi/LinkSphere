@@ -11,4 +11,4 @@ const createAtlassianClient = (email, apiToken, domain) => {
   });
 }
 
-module.exports = { createAtlassianClient };
+module.exports = createAtlassianClient;
