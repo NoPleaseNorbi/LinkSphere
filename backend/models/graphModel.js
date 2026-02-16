@@ -73,4 +73,81 @@ const saveProjectGraphToDB = async (projectData) => {
   }
 }
 
-module.exports = saveProjectGraphToDB ;
+const getProjectGraphFromDB = async (projectKey) => {
+  const session = driver.session();
+  try {
+    // Query to get all nodes and relationships for a project
+    const result = await session.run(`
+      MATCH (i:Issue {projectKey: $projectKey})
+      OPTIONAL MATCH (i)-[r]-(connected)
+      RETURN i, collect({rel: r, node: connected}) as connections
+    `, { projectKey });
+
+    const nodes = [];
+    const edges = [];
+    const nodeIds = new Set();
+
+    result.records.forEach(record => {
+      const issue = record.get('i').properties;
+      const issueId = issue.key;
+
+      // Add issue node if not already added
+      if (!nodeIds.has(issueId)) {
+        nodes.push({
+          id: issueId,
+          label: issue.key,
+          type: 'issue',
+          data: {
+            summary: issue.summary,
+            status: issue.status,
+            priority: issue.priority,
+            issueType: issue.issueType,
+            description: issue.description,
+          }
+        });
+        nodeIds.add(issueId);
+      }
+
+      // Process connections
+      const connections = record.get('connections');
+      connections.forEach(conn => {
+        if (conn.rel && conn.node) {
+          const rel = conn.rel;
+          const connectedNode = conn.node.properties;
+          const connectedId = connectedNode.key || connectedNode.accountId;
+
+          // Add connected node if not already added
+          if (connectedId && !nodeIds.has(connectedId)) {
+            const nodeType = conn.node.labels[0].toLowerCase();
+            nodes.push({
+              id: connectedId,
+              label: connectedNode.displayName || connectedNode.key,
+              type: nodeType,
+              data: connectedNode
+            });
+            nodeIds.add(connectedId);
+          }
+
+          // Add edge
+          if (connectedId) {
+            edges.push({
+              id: `${issueId}-${rel.type}-${connectedId}`,
+              source: issueId,
+              target: connectedId,
+              label: rel.type,
+              type: rel.type
+            });
+          }
+        }
+      });
+    });
+
+    return { nodes, edges };
+  } catch (err) {
+    throw new Error(`Failed to get project graph: ${err.message}`);
+  } finally {
+    await session.close();
+  }
+}
+
+module.exports = { saveProjectGraphToDB, getProjectGraphFromDB };
