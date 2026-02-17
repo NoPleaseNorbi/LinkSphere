@@ -6,7 +6,7 @@ const Home = () => {
     <Container maxWidth="lg">
       <Box sx={{ my: 8, textAlign: 'center' }}>
         <Typography variant="h2" component="h1" gutterBottom>
-          Welcome to Jira Knowledge Graph
+          Welcome to LinkSphere
         </Typography>
         <Typography variant="h5" component="h2" color="text.secondary" paragraph>
           Visualize and explore your Jira data through interactive knowledge graphs

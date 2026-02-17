@@ -1,9 +1,15 @@
 const express = require("express");
 const router = express.Router();
-const JiraController = require("../controllers/jiraController");
+const {
+  saveCredentials,
+  getProjects,
+  saveProjectGraph
+} = require("../controllers/jiraController");
 
-router.get("/projects", JiraController.getProjects);
-router.get("/issue/:issueId", JiraController.getIssue);
-router.get("/project/:projectKey/issues", JiraController.getProjectIssues);
+router.post("/credentials", saveCredentials);
+
+router.get("/projects", getProjects);
+
+router.post("/project/save-graph", saveProjectGraph);
 
 module.exports = router;

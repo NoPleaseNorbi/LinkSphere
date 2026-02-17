@@ -32,6 +32,20 @@ const NavigationBar = () => {
           >
             Documentation
           </Button>
+          <Button 
+            color="inherit" 
+            component={RouterLink} 
+            to="/settings"
+          >
+            Settings
+          </Button>
+          <Button 
+            color="inherit" 
+            component={RouterLink} 
+            to="/projects"
+          >
+            Projects
+          </Button>
         </Box>
       </Toolbar>
     </AppBar>

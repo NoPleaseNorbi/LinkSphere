@@ -1,52 +1,153 @@
-const { getSession } = require('../neo4j');
+const neo4j = require("neo4j-driver");
+const createUserQuery = require("../models/createUser");
+const createIssueQuery = require("../models/createIssue");
+const createConnectionQuery = require("../models/createConnection");
 
-const GraphModel = {
-  async createIssueNode(issueId, title) {
-    const session = getSession();
-    try {
-      await session.run(
-        'MERGE (i:Issue {id: $id}) SET i.title = $title RETURN i',
-        { id: issueId, title }
-      );
-    } finally {
-      await session.close();
+// Initialize driver once
+const uri = process.env.NEO4J_URI || "bolt://localhost:7687";
+const user = process.env.NEO4J_USER || "neo4j";
+const password = process.env.NEO4J_PASSWORD;
+
+const driver = neo4j.driver(uri, neo4j.auth.basic(user, password));
+
+const saveProjectGraphToDB = async (projectData) => {
+  const { issues, users, connections } = projectData;
+  const results = {
+    usersCreated: 0,
+    issuesCreated: 0,
+    connectionsCreated: 0,
+    errors: [],
+  };
+
+  const session = driver.session();
+
+  try {
+    // Create users
+    if (users && users.length > 0) {
+      for (const user of users) {
+        try {
+          await session.run(createUserQuery, user);
+          results.usersCreated++;
+        } catch (err) {
+          results.errors.push(`User ${user.accountId}: ${err.message}`);
+        }
+      }
     }
-  },
 
-  async linkIssueToPage(issueId, pageId) {
-    const session = getSession();
-    try {
-      await session.run(
-        `
-        MATCH (i:Issue {id: $issueId}), (p:Page {id: $pageId})
-        MERGE (i)-[:LINKED_TO]->(p)
-        `,
-        { issueId, pageId }
-      );
-    } finally {
-      await session.close();
+    // Create issues
+    if (issues && issues.length > 0) {
+      for (const issue of issues) {
+        try {
+          await session.run(createIssueQuery, issue);
+          results.issuesCreated++;
+        } catch (err) {
+          results.errors.push(`Issue ${issue.key}: ${err.message}`);
+        }
+      }
     }
-  },
 
-  async getIssueGraph(issueId) {
-    const session = getSession();
-    try {
-      const result = await session.run(
-        `
-        MATCH (i:Issue {id: $issueId})-[r:LINKED_TO]->(p:Page)
-        RETURN i, r, p
-        `,
-        { issueId }
-      );
-
-      return result.records.map(rec => ({
-        issue: rec.get('i').properties,
-        page: rec.get('p').properties,
-      }));
-    } finally {
-      await session.close();
+    // Create connections
+    if (connections && connections.length > 0) {
+      for (const conn of connections) {
+        try {
+          const query = createConnectionQuery(
+            conn.fromLabel,
+            conn.fromKey,
+            conn.toLabel,
+            conn.toKey,
+            conn.type || "RELATED_TO"
+          );
+          await session.run(query, { fromKey: conn.fromKey, toKey: conn.toKey });
+          results.connectionsCreated++;
+        } catch (err) {
+          results.errors.push(`Connection ${conn.fromKey}->${conn.toKey}: ${err.message}`);
+        }
+      }
     }
+
+    return results;
+  } catch (err) {
+    throw new Error(`Failed to save project graph: ${err.message}`);
+  } finally {
+    await session.close();
   }
-};
+}
 
-module.exports = GraphModel;
+const getProjectGraphFromDB = async (projectKey) => {
+  const session = driver.session();
+  try {
+    // Query to get all nodes and relationships for a project
+    const result = await session.run(`
+      MATCH (i:Issue {projectKey: $projectKey})
+      OPTIONAL MATCH (i)-[r]-(connected)
+      RETURN i, collect({rel: r, node: connected}) as connections
+    `, { projectKey });
+
+    const nodes = [];
+    const edges = [];
+    const nodeIds = new Set();
+
+    result.records.forEach(record => {
+      const issue = record.get('i').properties;
+      const issueId = issue.key;
+
+      // Add issue node if not already added
+      if (!nodeIds.has(issueId)) {
+        nodes.push({
+          id: issueId,
+          label: issue.key,
+          type: 'issue',
+          data: {
+            summary: issue.summary,
+            status: issue.status,
+            priority: issue.priority,
+            issueType: issue.issueType,
+            description: issue.description,
+          }
+        });
+        nodeIds.add(issueId);
+      }
+
+      // Process connections
+      const connections = record.get('connections');
+      connections.forEach(conn => {
+        if (conn.rel && conn.node) {
+          const rel = conn.rel;
+          const connectedNode = conn.node.properties;
+          const connectedId = connectedNode.key || connectedNode.accountId;
+
+          // Add connected node if not already added
+          if (connectedId && !nodeIds.has(connectedId)) {
+            const nodeType = conn.node.labels[0].toLowerCase();
+            nodes.push({
+              id: connectedId,
+              label: connectedNode.displayName || connectedNode.key,
+              type: nodeType,
+              data: connectedNode
+            });
+            nodeIds.add(connectedId);
+          }
+
+          // Add edge
+          if (connectedId) {
+            edges.push({
+              id: `${issueId}-${rel.type}-${connectedId}`,
+              source: issueId,
+              target: connectedId,
+              label: rel.type,
+              type: rel.type
+            });
+          }
+        }
+      });
+    });
+
+    return { nodes, edges };
+  } catch (err) {
+    throw new Error(`Failed to get project graph: ${err.message}`);
+  } finally {
+    await session.close();
+  }
+}
+
+module.exports = { saveProjectGraphToDB, getProjectGraphFromDB };
