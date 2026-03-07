@@ -6,10 +6,10 @@ const Home = () => {
     <Container maxWidth="lg">
       <Box sx={{ my: 8, textAlign: 'center' }}>
         <Typography variant="h2" component="h1" gutterBottom>
-          Welcome to LinkSphere
+          Vitajte v LinkSphere
         </Typography>
         <Typography variant="h5" component="h2" color="text.secondary" paragraph>
-          Visualize and explore your Jira data through interactive knowledge graphs
+          Vizualizujte a preskúmajte svoje údaje z Jira prostredníctvom interaktívnych znalostných grafov.
         </Typography>
         <Box sx={{ mt: 4 }}>
           <Button 
@@ -19,7 +19,7 @@ const Home = () => {
             to="/documentation"
             sx={{ mr: 2 }}
           >
-            Get Started
+            Začať
           </Button>
           <Button 
             variant="outlined" 
@@ -27,7 +27,7 @@ const Home = () => {
             component={RouterLink} 
             to="/about"
           >
-            Learn More
+            Zisti viac
           </Button>
         </Box>
       </Box>

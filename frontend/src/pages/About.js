@@ -5,34 +5,33 @@ const About = () => {
     <Container maxWidth="md">
       <Box sx={{ my: 6 }}>
         <Typography variant="h3" component="h1" gutterBottom>
-          About
+          O LinkSphere
         </Typography>
         
         <Paper elevation={2} sx={{ p: 4, mt: 4 }}>
           <Typography variant="h5" component="h2" gutterBottom>
-            What is LinkSphere?
+            Čo je LinkSphere?
           </Typography>
           <Typography paragraph>
-            LinkSphere is a powerful visualization tool that helps teams understand the complex relationships within their Jira projects. By leveraging graph database technology with Neo4j, we transform your project data into an interactive, explorable knowledge graph.
+            LinkSphere je výkonný vizualizačný nástroj, ktorý pomáha tímom pochopiť zložité vzťahy v ich projektoch v Jira. Využitím technológie grafovej databázy Neo4j premieňame vaše projektové dáta na interaktívny, preskúmateľný znalostný graf.
           </Typography>
 
           <Typography variant="h6" component="h3" gutterBottom sx={{ mt: 3 }}>
-            Technology Stack
+            Technologický stack
           </Typography>
           <Typography paragraph>
-            This application is built using the PERN stack (PostgreSQL, Express.js, React, Node.js) with Neo4j as the graph database, providing a robust and scalable solution for managing and visualizing your Jira data.
+            Tento projekt je vytvorený pomocou stacku PERN (PostgreSQL, Express.js, React, Node.js) s Neo4j ako grafovou databázou, poskytujúc robustné a škálovateľné riešenie pre správu a vizualizáciu dát z Jira.
           </Typography>
-
           <Typography variant="h6" component="h3" gutterBottom sx={{ mt: 3 }}>
-            Key Features
+            Kľúčové funkcie
           </Typography>
           <Typography component="div">
             <ul>
-              <li>Real-time synchronization with Jira</li>
-              <li>Interactive graph visualization of issues, epics, and dependencies</li>
-              <li>Advanced search and filtering capabilities</li>
-              <li>Graph-based analytics and insights</li>
-              <li>User-friendly Material UI interface</li>
+              <li>Synchronizácia s Jira v reálnom čase</li>
+              <li>Interaktívna grafová vizualizácia úloh, epikov a závislostí</li>
+              <li>Pokročilé možnosti vyhľadávania a filtrovania</li>
+              <li>Analytika a prehľady založené na grafe</li>
+              <li>Používateľsky prívetivé rozhranie Material UI</li>
             </ul>
           </Typography>
         </Paper>

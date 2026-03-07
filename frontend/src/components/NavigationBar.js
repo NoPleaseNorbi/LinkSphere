@@ -16,35 +16,35 @@ const NavigationBar = () => {
             component={RouterLink} 
             to="/"
           >
-            Home
+            Domov
           </Button>
           <Button 
             color="inherit" 
             component={RouterLink} 
             to="/about"
           >
-            About
+            O nás
           </Button>
           <Button 
             color="inherit" 
             component={RouterLink} 
             to="/documentation"
           >
-            Documentation
+            Dokumentácia
           </Button>
           <Button 
             color="inherit" 
             component={RouterLink} 
             to="/settings"
           >
-            Settings
+            Nastavenia
           </Button>
           <Button 
             color="inherit" 
             component={RouterLink} 
             to="/projects"
           >
-            Projects
+            Projekty
           </Button>
         </Box>
       </Toolbar>
