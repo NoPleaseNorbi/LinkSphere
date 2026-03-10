@@ -11,11 +11,8 @@ import {
   Chip,
   Divider,
   Container,
-  Breadcrumbs,
-  Link,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import HomeIcon from '@mui/icons-material/Home';
 import Graph from 'graphology';
 import Sigma from 'sigma';
 import { circular } from 'graphology-layout';
@@ -155,34 +152,14 @@ const ProjectGraph = () => {
   const handleCloseDrawer = () => {
     setDrawerOpen(false);
   };
-
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
-      {/* Breadcrumbs */}
-      <Breadcrumbs sx={{ mb: 3 }}>
-        <Link
-          underline="hover"
-          sx={{ display: 'flex', alignItems: 'center' }}
-          color="inherit"
-          href="/"
-        >
-          <HomeIcon sx={{ mr: 0.5 }} fontSize="inherit" />
-          Domov
-        </Link>
-        <Typography color="text.primary">
-          Projekt: {projectId}
-        </Typography>
-        <Typography color="text.primary">Graf</Typography>
-      </Breadcrumbs>
-
       {/* Page Title */}
-      <Typography variant="h4" gutterBottom>
-        {projectId} - Projektový graf
-      </Typography>
-      <Typography variant="body2" color="textSecondary" paragraph>
-        Vizualizujte projektové problémy, používateľov a ich vzťahy
-      </Typography>
-
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
+        <Typography variant="h4" gutterBottom>
+          {projectId} - Projektový graf
+        </Typography>
+      </Box>    
       {/* Loading State */}
       {loading && (
         <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">

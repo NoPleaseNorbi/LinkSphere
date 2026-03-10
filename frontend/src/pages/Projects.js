@@ -30,6 +30,7 @@ const Projects = () => {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
 
+  // Runs on page load - just fetches the project list
   const fetchProjects = async () => {
     setLoading(true);
     setError(null);
@@ -45,6 +46,42 @@ const Projects = () => {
 
       const data = await res.json();
       setProjects(data);
+    } catch (err) {
+      console.error('Fetch error:', err);
+      setError('Nepodarilo sa pripojiť k serveru. Beží backend?');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Only runs when user clicks refresh - fetches projects AND resyncs Neo4j
+  const refreshProjects = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch('http://localhost:5000/api/jira/projects');
+
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || 'Nepodarilo sa načítať projekty');
+        return;
+      }
+
+      const data = await res.json();
+      setProjects(data);
+
+      for (const project of data) {
+        const saveRes = await fetch('http://localhost:5000/api/jira/project/save-graph', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectKey: project.key })
+        });
+
+        if (!saveRes.ok) {
+          console.warn(`Failed to save graph for project ${project.key}`);
+        }
+      }
     } catch (err) {
       console.error('Fetch error:', err);
       setError('Nepodarilo sa pripojiť k serveru. Beží backend?');
@@ -123,7 +160,7 @@ const Projects = () => {
           <Typography variant="h3" component="h1">
             Projekty
           </Typography>
-          <Button variant="outlined" size="small" onClick={fetchProjects} startIcon={<RefreshIcon />}>
+          <Button variant="outlined" size="small" onClick={refreshProjects} startIcon={<RefreshIcon />}>
             Obnoviť
           </Button>
         </Box>

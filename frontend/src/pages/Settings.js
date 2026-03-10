@@ -115,35 +115,37 @@ const Settings = () => {
 
     // Save all projects to Neo4j
     try {
-      const saveProjectsRes = await fetch('http://localhost:5000/api/jira/project/save-graph', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const saveResults = { totalIssues: 0, totalUsers: 0, errors: [] };
 
-      if (!saveProjectsRes.ok) {
-        const errorData = await saveProjectsRes.json();
-        setDialogData({
-          success: false,
-          message: `Úspešne pripojené (${projects.length} projektov nájdených), ale nepodarilo sa importovať do Neo4j: ${errorData.error}`,
-          projectCount: projects.length
+      for (const project of projects) {
+        const saveProjectsRes = await fetch('http://localhost:5000/api/jira/project/save-graph', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectKey: project.key })  // ✅ pass each project key
         });
-        setDialogOpen(true);
-        return;
+
+        if (!saveProjectsRes.ok) {
+          const errorData = await saveProjectsRes.json();
+          saveResults.errors.push(`${project.key}: ${errorData.error}`);
+          continue;
+        }
+
+        const projectData = await saveProjectsRes.json();
+        saveResults.totalIssues += projectData.stats.issuesCreated;
+        saveResults.totalUsers += projectData.stats.usersCreated;
       }
 
-      const projectsData = await saveProjectsRes.json();
-      
       setDialogData({
         success: true,
         message: projects.length > 0
-          ? `Úspešne pripojené a importované do Neo4j! Nájdených ${projects.length} projekt(ov), uložených ${projectsData.stats.totalIssues} problémov a ${projectsData.stats.totalUsers} používateľov.`
+          ? `Úspešne pripojené a importované do Neo4j! Nájdených ${projects.length} projekt(ov), uložených ${saveResults.totalIssues} problémov a ${saveResults.totalUsers} používateľov.`
           : 'Úspešne pripojené, ale nenašli sa žiadne projekty.',
         projectCount: projects.length,
         neo4jStats: {
-          projectsProcessed: projectsData.stats.projectsProcessed,
-          totalIssues: projectsData.stats.totalIssues,
-          totalUsers: projectsData.stats.totalUsers,
-          errors: projectsData.stats.errors.length
+          projectsProcessed: projects.length - saveResults.errors.length,
+          totalIssues: saveResults.totalIssues,
+          totalUsers: saveResults.totalUsers,
+          errors: saveResults.errors.length
         }
       });
       setDialogOpen(true);
