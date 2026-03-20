@@ -9,6 +9,12 @@ module.exports = `
       i.created = $created,
       i.updated = $updated,
       i.projectKey = $projectKey,
+      i.assignee = $assignee,
+      i.assigneeAvatar = $assigneeAvatar,
+      i.assigneeEmail = $assigneeEmail,
+      i.reporter = $reporter,
+      i.reporterAvatar = $reporterAvatar,
+      i.reporterEmail = $reporterEmail,
       i.updatedAt = datetime()
   RETURN i
 `;

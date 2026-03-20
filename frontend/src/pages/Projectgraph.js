@@ -244,7 +244,7 @@ const ProjectGraph = () => {
           <>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
               <Typography variant="h6">
-                {selectedNode.type === 'issue' ? 'Detaily problému' : 'Detaily používateľa'}
+                {selectedNode.nodeType === 'issue' ? 'Detaily problému' : 'Detaily používateľa'}
               </Typography>
               <IconButton onClick={handleCloseDrawer}>
                 <CloseIcon />
@@ -253,7 +253,7 @@ const ProjectGraph = () => {
 
             <Divider sx={{ mb: 2 }} />
 
-            {selectedNode.type === 'issue' ? (
+            {selectedNode.nodeType === 'issue' ? (
               <>
                 <Typography variant="subtitle2" color="textSecondary">
                   Kľúč
@@ -285,6 +285,46 @@ const ProjectGraph = () => {
                 <Typography variant="body1" mb={2}>
                   {selectedNode.data.issueType}
                 </Typography>
+                
+                {selectedNode.data.assignee && (
+                  <>
+                    <Typography variant="subtitle2" color="textSecondary">
+                      Riešiteľ
+                    </Typography>
+                    <Box display="flex" alignItems="center" gap={1} mb={2}>
+                      {selectedNode.data.assigneeAvatar && (
+                        <img
+                          src={selectedNode.data.assigneeAvatar}
+                          alt={selectedNode.data.assignee}
+                          style={{ width: 48, height: 48, borderRadius: '50%' }}
+                        />
+                      )}
+                      <Typography variant="body1">
+                        {selectedNode.data.assignee}
+                      </Typography>
+                    </Box>
+                  </>
+                )}
+
+                {selectedNode.data.reporter && (
+                  <>
+                    <Typography variant="subtitle2" color="textSecondary">
+                      Reportér
+                    </Typography>
+                    <Box display="flex" alignItems="center" gap={1} mb={2}>
+                      {selectedNode.data.reporterAvatar && (
+                        <img
+                          src={selectedNode.data.reporterAvatar}
+                          alt={selectedNode.data.reporter}
+                          style={{ width: 48, height: 48, borderRadius: '50%' }}
+                        />
+                      )}
+                      <Typography variant="body1">
+                        {selectedNode.data.reporter}
+                      </Typography>
+                    </Box>
+                  </>
+                )}
 
                 {selectedNode.data.description && (
                   <>

@@ -103,6 +103,12 @@ const getProjectGraphFromDB = async (projectKey) => {
             priority: issue.priority,
             issueType: issue.issueType,
             description: issue.description,
+            assignee: issue.assignee,
+            assigneeAvatar: issue.assigneeAvatar,
+            assigneeEmail: issue.assigneeEmail,
+            reporter: issue.reporter,
+            reporterAvatar: issue.reporterAvatar,
+            reporterEmail: issue.reporterEmail,
           }
         });
         nodeIds.add(issueId);

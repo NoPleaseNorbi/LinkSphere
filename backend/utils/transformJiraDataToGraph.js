@@ -46,6 +46,12 @@ const transformJiraDataToGraph = (jiraIssues) => {
       created: fields.created || "",
       updated: fields.updated || "",
       projectKey: issue.key.split("-")[0],
+      assignee: fields.assignee?.displayName || "",
+      assigneeAvatar: fields.assignee?.avatarUrls?.["48x48"] || "",
+      assigneeEmail: fields.assignee?.emailAddress || "",
+      reporter: fields.reporter?.displayName || "",
+      reporterAvatar: fields.reporter?.avatarUrls?.["48x48"] || "",
+      reporterEmail: fields.reporter?.emailAddress || "",
     };
     issues.push(issueData);
 
