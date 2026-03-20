@@ -11,11 +11,8 @@ import {
   Chip,
   Divider,
   Container,
-  Breadcrumbs,
-  Link,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import HomeIcon from '@mui/icons-material/Home';
 import Graph from 'graphology';
 import Sigma from 'sigma';
 import { circular } from 'graphology-layout';
@@ -41,13 +38,13 @@ const ProjectGraph = () => {
         const response = await fetch(`http://localhost:5000/api/database/graph/${projectId}`);
         
         if (!response.ok) {
-          throw new Error('Failed to fetch graph data');
+          throw new Error('Nepodarilo sa načítať údaje grafu');
         }
 
         const data = await response.json();
         
         if (!data.graph.nodes || data.graph.nodes.length === 0) {
-          setError('No graph data found for this project');
+          setError('Pre tento projekt sa nenašli žiadne údaje grafu');
           return;
         }
         
@@ -155,34 +152,14 @@ const ProjectGraph = () => {
   const handleCloseDrawer = () => {
     setDrawerOpen(false);
   };
-
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
-      {/* Breadcrumbs */}
-      <Breadcrumbs sx={{ mb: 3 }}>
-        <Link
-          underline="hover"
-          sx={{ display: 'flex', alignItems: 'center' }}
-          color="inherit"
-          href="/"
-        >
-          <HomeIcon sx={{ mr: 0.5 }} fontSize="inherit" />
-          Home
-        </Link>
-        <Typography color="text.primary">
-          Project: {projectId}
-        </Typography>
-        <Typography color="text.primary">Graph</Typography>
-      </Breadcrumbs>
-
       {/* Page Title */}
-      <Typography variant="h4" gutterBottom>
-        {projectId} - Project Graph
-      </Typography>
-      <Typography variant="body2" color="textSecondary" paragraph>
-        Visualize project issues, users, and their relationships
-      </Typography>
-
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
+        <Typography variant="h4" gutterBottom>
+          {projectId} - Projektový graf
+        </Typography>
+      </Box>    
       {/* Loading State */}
       {loading && (
         <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
@@ -221,7 +198,7 @@ const ProjectGraph = () => {
           {/* Legend */}
           <Paper elevation={1} sx={{ mt: 2, p: 2 }}>
             <Typography variant="subtitle2" gutterBottom>
-              Legend
+              Legenda
             </Typography>
             <Box display="flex" gap={3}>
               <Box display="flex" alignItems="center" gap={1}>
@@ -233,7 +210,7 @@ const ProjectGraph = () => {
                     bgcolor: '#1976d2',
                   }}
                 />
-                <Typography variant="body2">Issues</Typography>
+                <Typography variant="body2">Problémy</Typography>
               </Box>
               <Box display="flex" alignItems="center" gap={1}>
                 <Box
@@ -244,7 +221,7 @@ const ProjectGraph = () => {
                     bgcolor: '#2e7d32',
                   }}
                 />
-                <Typography variant="body2">Users</Typography>
+                <Typography variant="body2">Používatelia</Typography>
               </Box>
             </Box>
           </Paper>
@@ -267,7 +244,7 @@ const ProjectGraph = () => {
           <>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
               <Typography variant="h6">
-                {selectedNode.type === 'issue' ? 'Issue Details' : 'User Details'}
+                {selectedNode.type === 'issue' ? 'Detaily problému' : 'Detaily používateľa'}
               </Typography>
               <IconButton onClick={handleCloseDrawer}>
                 <CloseIcon />
@@ -279,14 +256,14 @@ const ProjectGraph = () => {
             {selectedNode.type === 'issue' ? (
               <>
                 <Typography variant="subtitle2" color="textSecondary">
-                  Key
+                  Kľúč
                 </Typography>
                 <Typography variant="body1" mb={2}>
                   {selectedNode.label}
                 </Typography>
 
                 <Typography variant="subtitle2" color="textSecondary">
-                  Summary
+                  Zhrnutie
                 </Typography>
                 <Typography variant="body1" mb={2}>
                   {selectedNode.data.summary}
@@ -298,12 +275,12 @@ const ProjectGraph = () => {
                 <Chip label={selectedNode.data.status} color="primary" size="small" sx={{ mb: 2 }} />
 
                 <Typography variant="subtitle2" color="textSecondary">
-                  Priority
+                  Priorita
                 </Typography>
                 <Chip label={selectedNode.data.priority} color="secondary" size="small" sx={{ mb: 2 }} />
 
                 <Typography variant="subtitle2" color="textSecondary">
-                  Type
+                  Typ úlohy
                 </Typography>
                 <Typography variant="body1" mb={2}>
                   {selectedNode.data.issueType}
@@ -312,7 +289,7 @@ const ProjectGraph = () => {
                 {selectedNode.data.description && (
                   <>
                     <Typography variant="subtitle2" color="textSecondary">
-                      Description
+                      Popis
                     </Typography>
                     <Typography variant="body2" mb={2}>
                       {selectedNode.data.description}
@@ -323,7 +300,7 @@ const ProjectGraph = () => {
             ) : (
               <>
                 <Typography variant="subtitle2" color="textSecondary">
-                  Display Name
+                  Zobrazované meno
                 </Typography>
                 <Typography variant="body1" mb={2}>
                   {selectedNode.label}

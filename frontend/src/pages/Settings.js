@@ -46,20 +46,20 @@ const Settings = () => {
 
   const validateInputs = () => {
     if (!credentials.email || !credentials.apiToken || !credentials.domain) {
-      setError('All fields are required');
+      setError('Všetky polia sú povinné');
       return false;
     }
 
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(credentials.email)) {
-      setError('Please enter a valid email address');
+      setError('Zadajte platnú e-mailovú adresu');
       return false;
     }
 
     // Validate domain format
     if (!credentials.domain.includes('.')) {
-      setError('Please enter a valid domain (e.g., yourcompany.atlassian.net)');
+      setError('Zadajte platnú doménu (napr. vasaspolecnost.atlassian.net)');
       return false;
     }
 
@@ -91,7 +91,7 @@ const Settings = () => {
       const saveData = await saveRes.json();
       setDialogData({
         success: false,
-        message: saveData.error || 'Failed to save credentials.',
+        message: saveData.error || 'Nepodarilo sa uložiť prihlasovacie údaje.',
         projectCount: 0
       });
       setDialogOpen(true);
@@ -106,7 +106,7 @@ const Settings = () => {
     if (!projectsRes.ok) {
       setDialogData({
         success: false,
-        message: projects.error || 'Credentials saved, but failed to fetch projects.',
+        message: projects.error || 'Prihlasovacie údaje uložené, ale nepodarilo sa načítať projekty.',
         projectCount: 0
       });
       setDialogOpen(true);
@@ -115,35 +115,37 @@ const Settings = () => {
 
     // Save all projects to Neo4j
     try {
-      const saveProjectsRes = await fetch('http://localhost:5000/api/jira/projects/save-all', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const saveResults = { totalIssues: 0, totalUsers: 0, errors: [] };
 
-      if (!saveProjectsRes.ok) {
-        const errorData = await saveProjectsRes.json();
-        setDialogData({
-          success: false,
-          message: `Connected successfully (${projects.length} projects found), but failed to import to Neo4j: ${errorData.error}`,
-          projectCount: projects.length
+      for (const project of projects) {
+        const saveProjectsRes = await fetch('http://localhost:5000/api/jira/project/save-graph', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectKey: project.key })  // ✅ pass each project key
         });
-        setDialogOpen(true);
-        return;
+
+        if (!saveProjectsRes.ok) {
+          const errorData = await saveProjectsRes.json();
+          saveResults.errors.push(`${project.key}: ${errorData.error}`);
+          continue;
+        }
+
+        const projectData = await saveProjectsRes.json();
+        saveResults.totalIssues += projectData.stats.issuesCreated;
+        saveResults.totalUsers += projectData.stats.usersCreated;
       }
 
-      const projectsData = await saveProjectsRes.json();
-      
       setDialogData({
         success: true,
         message: projects.length > 0
-          ? `Successfully connected and imported to Neo4j! Found ${projects.length} project(s), saved ${projectsData.stats.totalIssues} issues and ${projectsData.stats.totalUsers} users.`
-          : 'Successfully connected, but no projects were found.',
+          ? `Úspešne pripojené a importované do Neo4j! Nájdených ${projects.length} projekt(ov), uložených ${saveResults.totalIssues} problémov a ${saveResults.totalUsers} používateľov.`
+          : 'Úspešne pripojené, ale nenašli sa žiadne projekty.',
         projectCount: projects.length,
         neo4jStats: {
-          projectsProcessed: projectsData.stats.projectsProcessed,
-          totalIssues: projectsData.stats.totalIssues,
-          totalUsers: projectsData.stats.totalUsers,
-          errors: projectsData.stats.errors.length
+          projectsProcessed: projects.length - saveResults.errors.length,
+          totalIssues: saveResults.totalIssues,
+          totalUsers: saveResults.totalUsers,
+          errors: saveResults.errors.length
         }
       });
       setDialogOpen(true);
@@ -152,7 +154,7 @@ const Settings = () => {
       console.error('Neo4j import error:', neo4jError);
       setDialogData({
         success: false,
-        message: `Connected successfully (${projects.length} projects found), but failed to import to Neo4j: ${neo4jError.message}`,
+        message: `Úspešne pripojené (${projects.length} projektov nájdených), ale nepodarilo sa importovať do Neo4j: ${neo4jError.message}`,
         projectCount: projects.length
       });
       setDialogOpen(true);
@@ -162,7 +164,7 @@ const Settings = () => {
     console.error('Fetch error:', err);
     setDialogData({
       success: false,
-      message: 'Failed to connect to server. Please make sure the backend is running.',
+      message: 'Nepodarilo sa pripojiť k serveru. Uistite sa, že backend beží.',
       projectCount: 0
     });
     setDialogOpen(true);
@@ -182,16 +184,16 @@ const handleCloseDialog = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
           <SettingsIcon sx={{ fontSize: 40, mr: 2, color: 'primary.main' }} />
           <Typography variant="h3" component="h1">
-            Settings
+            Nastavenia
           </Typography>
         </Box>
 
         <Paper elevation={3} sx={{ p: 4 }}>
           <Typography variant="h5" component="h2" gutterBottom>
-            Jira Credentials
+            Prihlasovacie údaje do Jira
           </Typography>
           <Typography variant="body2" color="text.secondary" paragraph>
-            Configure your Atlassian Jira credentials to fetch and visualize your project data.
+            Konfigurujte svoje prihlasovacie údaje do Atlassian Jira na načítanie a vizualizáciu údajov o vašich projektoch.
           </Typography>
 
           {error && (
@@ -203,12 +205,12 @@ const handleCloseDialog = () => {
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
             <TextField
               fullWidth
-              label="Atlassian Email"
+              label="Atlassian E-mail"
               name="email"
               type="email"
               value={credentials.email}
               onChange={handleChange}
-              placeholder="your.email@gmail.com"
+              placeholder="vas.email@gmail.com"
               margin="normal"
               required
               disabled={loading}
@@ -221,19 +223,19 @@ const handleCloseDialog = () => {
               type="password"
               value={credentials.apiToken}
               onChange={handleChange}
-              placeholder="Enter your Atlassian API token"
+              placeholder="Zadajte svoj Atlassian API token"
               margin="normal"
               required
               disabled={loading}
               helperText={
                 <span>
-                  Don't have an API token?{' '}
+                  Nemáte API token?{' '}
                   <Link 
                     href="https://id.atlassian.com/manage-profile/security/api-tokens" 
                     target="_blank" 
                     rel="noopener noreferrer"
                   >
-                    Create one here
+                    Vytvorte ho tu
                   </Link>
                 </span>
               }
@@ -241,15 +243,15 @@ const handleCloseDialog = () => {
 
             <TextField
               fullWidth
-              label="Jira Domain"
+              label="Jira Doména"
               name="domain"
               value={credentials.domain}
               onChange={handleChange}
-              placeholder="yourcompany.atlassian.net"
+              placeholder="vasaspolecnost.atlassian.net"
               margin="normal"
               required
               disabled={loading}
-              helperText="Your Jira instance domain (without https://)"
+              helperText="Doména vašej Jira inštancie (bez https://)"
             />
 
             <Box sx={{ mt: 4, display: 'flex', gap: 2 }}>
@@ -260,7 +262,7 @@ const handleCloseDialog = () => {
                 disabled={loading}
                 startIcon={loading ? <CircularProgress size={20} /> : null}
               >
-                {loading ? 'Connecting...' : 'Connect & Fetch Projects'}
+                {loading ? 'Pripája sa...' : 'Pripojiť a načítať projekty'}
               </Button>
               
               {credentials.email || credentials.apiToken || credentials.domain ? (
@@ -270,7 +272,7 @@ const handleCloseDialog = () => {
                   onClick={() => setCredentials({ email: '', apiToken: '', domain: '' })}
                   disabled={loading}
                 >
-                  Clear
+                  Vymazať
                 </Button>
               ) : null}
             </Box>
@@ -289,12 +291,12 @@ const handleCloseDialog = () => {
           {dialogData.success ? (
             <>
               <CheckCircleIcon color="success" />
-              Connection Successful
+              Pripojenie úspešné
             </>
           ) : (
             <>
               <ErrorIcon color="error" />
-              Connection Failed
+              Pripojenie zlyhalo
             </>
           )}
         </DialogTitle>
@@ -305,19 +307,19 @@ const handleCloseDialog = () => {
           
           {dialogData.success && dialogData.projectCount === 0 && (
             <Alert severity="warning" sx={{ mt: 2 }}>
-              No projects found. Make sure you have access to at least one Jira project.
+              Nenašli sa žiadne projekty. Uistite sa, že máte prístup aspoň k jednému Jira projektu.
             </Alert>
           )}
           
           {dialogData.success && dialogData.projectCount > 0 && (
             <Alert severity="success" sx={{ mt: 2 }}>
-              Your credentials are working! You can now visualize your Jira projects.
+              Vaše prihlasovacie údaje fungujú! Teraz môžete vizualizovať svoje Jira projekty.
             </Alert>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog} variant="contained">
-            Close
+            Zavrieť
           </Button>
         </DialogActions>
       </Dialog>

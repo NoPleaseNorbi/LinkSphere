@@ -2,7 +2,7 @@ const JiraCredentials = require("../models/jiraCredentials");
 const createAtlassianClient = require("../utils/atlassianClient");
 const fetchAllProjectIssues = require("../utils/fetchAllProjectIssues");
 const transformJiraDataToGraph = require("../utils/transformJiraDataToGraph");
-const saveProjectGraphToDB = require("../models/graphModel");
+const { saveProjectGraphToDB } = require("../models/graphModel");
 
 const saveCredentials = async (req, res) => {
   try {

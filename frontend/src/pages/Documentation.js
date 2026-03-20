@@ -6,24 +6,24 @@ const Documentation = () => {
     <Container maxWidth="md">
       <Box sx={{ my: 6 }}>
         <Typography variant="h3" component="h1" gutterBottom>
-          Documentation
+          Dokumentácia
         </Typography>
         
         <Box sx={{ mt: 4 }}>
           <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="h6">Getting Started</Typography>
+              <Typography variant="h6">Začíname</Typography>
             </AccordionSummary>
             <AccordionDetails>
               <Typography paragraph>
-                To get started with LinkSphere, you'll need to:
+                Aby ste mohli začať s LinkSphere, budete potrebovať:
               </Typography>
               <Typography component="div">
                 <ol>
-                  <li>Connect your Jira instance using API credentials</li>
-                  <li>Select the projects you want to import</li>
-                  <li>Wait for the initial data synchronization</li>
-                  <li>Explore your knowledge graph!</li>
+                  <li>Pripojte svoju inštanciu Jira pomocou API prihlasovacích údajov</li>
+                  <li>Vyberte projekty, ktoré chcete importovať</li>
+                  <li>Čakajte na počiatočnú synchronizáciu dát</li>
+                  <li>Preskúmajte svoj znalostný graf!</li>
                 </ol>
               </Typography>
             </AccordionDetails>
@@ -31,39 +31,39 @@ const Documentation = () => {
 
           <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="h6">Connecting to Jira</Typography>
+              <Typography variant="h6">Pripojenie k Jira</Typography>
             </AccordionSummary>
             <AccordionDetails>
               <Typography paragraph>
-                You'll need the following information to connect to your Jira instance:
+                Budete potrebovať nasledujúce informácie na pripojenie k vašej inštancii Jira:
               </Typography>
               <Typography component="div">
                 <ul>
-                  <li>Jira instance URL</li>
-                  <li>API token or credentials</li>
-                  <li>User email address</li>
+                  <li>URL inštancie Jira</li>
+                  <li>API token alebo prihlasovacie údaje</li>
+                  <li>E-mailová adresa používateľa</li>
                 </ul>
               </Typography>
               <Typography paragraph sx={{ mt: 2 }}>
-                Navigate to the Settings page and enter your credentials to establish the connection.
+                Prejdite na stránku Nastavenia a zadajte svoje prihlasovacie údaje na vytvorenie pripojenia.
               </Typography>
             </AccordionDetails>
           </Accordion>
 
           <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="h6">Navigating the Graph</Typography>
+              <Typography variant="h6">Navigácia v grafe</Typography>
             </AccordionSummary>
             <AccordionDetails>
               <Typography paragraph>
-                The graph visualization provides several interaction options:
+                Vizualizácia grafu poskytuje niekoľko možností interakcie:
               </Typography>
               <Typography component="div">
                 <ul>
-                  <li>Click and drag to pan around the graph</li>
-                  <li>Scroll to zoom in and out</li>
-                  <li>Click on nodes to see detailed information</li>
-                  <li>Use filters to focus on specific issue types or relationships</li>
+                  <li>Na presúvanie grafu použite kliknutie a ťahanie</li>
+                  <li>Na priblíženie a oddialenie použite koliesko myši</li>
+                  <li>Kliknite na uzly pre zobrazenie detailných informácií</li>
+                  <li>Použite filtre na zameranie sa na konkrétne typy úloh alebo vzťahy</li>
                 </ul>
               </Typography>
             </AccordionDetails>
@@ -71,14 +71,14 @@ const Documentation = () => {
 
           <Accordion>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="h6">API Reference</Typography>
+              <Typography variant="h6">API Referencia</Typography>
             </AccordionSummary>
             <AccordionDetails>
               <Typography paragraph>
-                API documentation for developers integrating with the Jira Knowledge Graph platform.
+                API dokumentácia pre vývojárov integrujúcich sa s platformou Jira Knowledge Graph.
               </Typography>
               <Typography>
-                Detailed API reference documentation will be available here.
+                Podrobná referenčná dokumentácia API bude k dispozícii tu.
               </Typography>
             </AccordionDetails>
           </Accordion>

@@ -30,6 +30,7 @@ const Projects = () => {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
 
+  // Runs on page load - just fetches the project list
   const fetchProjects = async () => {
     setLoading(true);
     setError(null);
@@ -39,7 +40,7 @@ const Projects = () => {
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || 'Failed to fetch projects');
+        setError(data.error || 'Nepodarilo sa načítať projekty');
         return;
       }
 
@@ -47,7 +48,43 @@ const Projects = () => {
       setProjects(data);
     } catch (err) {
       console.error('Fetch error:', err);
-      setError('Could not connect to the server. Is the backend running?');
+      setError('Nepodarilo sa pripojiť k serveru. Beží backend?');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Only runs when user clicks refresh - fetches projects AND resyncs Neo4j
+  const refreshProjects = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch('http://localhost:5000/api/jira/projects');
+
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || 'Nepodarilo sa načítať projekty');
+        return;
+      }
+
+      const data = await res.json();
+      setProjects(data);
+
+      for (const project of data) {
+        const saveRes = await fetch('http://localhost:5000/api/jira/project/save-graph', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectKey: project.key })
+        });
+
+        if (!saveRes.ok) {
+          console.warn(`Failed to save graph for project ${project.key}`);
+        }
+      }
+    } catch (err) {
+      console.error('Fetch error:', err);
+      setError('Nepodarilo sa pripojiť k serveru. Beží backend?');
     } finally {
       setLoading(false);
     }
@@ -67,7 +104,7 @@ const Projects = () => {
       <Container maxWidth="lg">
         <Box sx={{ my: 6, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
           <CircularProgress size={48} />
-          <Typography color="text.secondary">Fetching projects...</Typography>
+          <Typography color="text.secondary">Načítavanie projektov...</Typography>
         </Box>
       </Container>
     );
@@ -79,18 +116,18 @@ const Projects = () => {
       <Container maxWidth="lg">
         <Box sx={{ my: 6 }}>
           <Typography variant="h3" component="h1" gutterBottom>
-            Projects
+            Projekty
           </Typography>
           <Alert
             severity="error"
             action={
               <Button color="inherit" size="small" onClick={fetchProjects} startIcon={<RefreshIcon />}>
-                Retry
+                Skúsiť znova
               </Button>
             }
           >
             {error === 'Credentials not configured'
-              ? <>Jira credentials are not set up yet. Go to <Button component={RouterLink} to="/settings" size="small" sx={{ mx: 0.5 }}>Settings</Button> to configure them.</>
+              ? <>Prihlasovacie údaje nie sú nakonfigurované. Pre ich konfiguráciu prejdite do <Button component={RouterLink} to="/settings" size="small" sx={{ mx: 0.5 }}>Nastavenia</Button>.</>
               : error
             }
           </Alert>
@@ -105,10 +142,10 @@ const Projects = () => {
       <Container maxWidth="lg">
         <Box sx={{ my: 6 }}>
           <Typography variant="h3" component="h1" gutterBottom>
-            Projects
+            Projekty
           </Typography>
           <Alert severity="info">
-            No projects found. Make sure your Jira account has access to at least one project.
+            Neboli nájdené žiadne projekty. Uistite sa, že váš účet v Jire má prístup aspoň k jednému projektu.
           </Alert>
         </Box>
       </Container>
@@ -121,15 +158,15 @@ const Projects = () => {
       <Box sx={{ my: 6 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
           <Typography variant="h3" component="h1">
-            Projects
+            Projekty
           </Typography>
-          <Button variant="outlined" size="small" onClick={fetchProjects} startIcon={<RefreshIcon />}>
-            Refresh
+          <Button variant="outlined" size="small" onClick={refreshProjects} startIcon={<RefreshIcon />}>
+            Obnoviť
           </Button>
         </Box>
 
         <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-          {projects.length} project{projects.length !== 1 ? 's' : ''} found — Click on a project to visualize its graph
+          {projects.length} {projects.length === 1 ? 'projekt' : 'projektov'} nájdených — Kliknite na projekt pre zobrazenie jeho grafu
         </Typography>
 
         <Grid container spacing={3}>
