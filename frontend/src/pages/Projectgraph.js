@@ -11,13 +11,37 @@ import {
   Chip,
   Divider,
   Container,
-  Switch
+  Switch,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  FormGroup,
+  FormControlLabel,
+  Checkbox
 } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CloseIcon from '@mui/icons-material/Close';
 import Graph from 'graphology';
 import Sigma from 'sigma';
 import { circular } from 'graphology-layout';
 import forceAtlas2 from 'graphology-layout-forceatlas2';
+
+// Outside the component, at the top of the file
+const PRIORITY_COLORS = {
+  'Highest': '#c50000',
+  'High':    '#f5584c',
+  'Medium':  '#ff9800',
+  'Low':     '#42a5f5',
+  'Lowest':  '#90caf9',
+};
+
+const PRIORITY_SIZES = {
+  'Highest': 24,
+  'High':    20,
+  'Medium':  16,
+  'Low':     12,
+  'Lowest':  10,
+};
 
 const ProjectGraph = () => {
   const { projectId } = useParams(); // Get projectId from URL
@@ -29,10 +53,21 @@ const ProjectGraph = () => {
   const [selectedNode, setSelectedNode] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [dragMode, setDragMode] = useState(false);
+  const graphDataRef = useRef(null);
+  const [filters, setFilters] = useState({ users: [], statuses: [], priorities: [] });
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [selectedStatuses, setSelectedStatuses] = useState([]);
+  const [selectedPriorities, setSelectedPriorities] = useState([]);
 
   useEffect(() => {
     dragModeRef.current = dragMode;
   }, [dragMode]);
+
+  useEffect(() => {
+    if (graphDataRef.current) {
+      renderGraph(graphDataRef.current, selectedUsers, selectedStatuses, selectedPriorities);
+    }
+  }, [selectedUsers, selectedStatuses, selectedPriorities]);
 
   useEffect(() => {
     if (!projectId) return;
@@ -42,20 +77,36 @@ const ProjectGraph = () => {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`http://localhost:5000/api/database/graph/${projectId}`);
-        
-        if (!response.ok) {
-          throw new Error('Nepodarilo sa načítať údaje grafu');
-        }
+        const [graphRes, usersRes, statusesRes, prioritiesRes] = await Promise.all([
+          fetch(`http://localhost:5000/api/database/graph/${projectId}`),
+          fetch(`http://localhost:5000/api/database/graph/users/${projectId}`),
+          fetch(`http://localhost:5000/api/database/graph/statuses/${projectId}`),
+          fetch(`http://localhost:5000/api/database/graph/priorities/${projectId}`),
+        ]);
 
-        const data = await response.json();
-        
+        if (!graphRes.ok) throw new Error('Nepodarilo sa načítať údaje grafu');
+
+        const data = await graphRes.json();
+        const usersData = await usersRes.json();
+        const statusesData = await statusesRes.json();
+        const prioritiesData = await prioritiesRes.json();
+
         if (!data.graph.nodes || data.graph.nodes.length === 0) {
           setError('Pre tento projekt sa nenašli žiadne údaje grafu');
           return;
         }
-        
-        renderGraph(data.graph);
+
+        const allUserIds = usersData.users.map(u => u.accountId);
+        const allStatuses = statusesData.statuses;
+        const allPriorities = prioritiesData.priorities;
+
+        graphDataRef.current = data.graph;
+        setFilters({ users: usersData.users, statuses: allStatuses, priorities: allPriorities });
+        setSelectedUsers(allUserIds);
+        setSelectedStatuses(allStatuses);
+        setSelectedPriorities(allPriorities);
+
+        renderGraph(data.graph, allUserIds, allStatuses, allPriorities);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -72,7 +123,7 @@ const ProjectGraph = () => {
     };
   }, [projectId]);
 
-  const renderGraph = (graphData) => {
+  const renderGraph = (data, activeUsers, activeStatuses, activePriorities) => {
     if (!containerRef.current) return;
 
     // Create a new graph
@@ -90,25 +141,46 @@ const ProjectGraph = () => {
     };
 
     // Add nodes
-    graphData.nodes.forEach(node => {
-      graph.addNode(node.id, {
-        label: node.label,
-        size: nodeSizes[node.type] || 10,
-        color: nodeColors[node.type] || '#999',
-        nodeType: node.type,
-        data: node.data,
-      });
+    data.nodes.forEach(node => {
+      if (node.type === 'issue') {
+        const matchesStatus = !activeStatuses || activeStatuses.includes(node.data.status);
+        const matchesPriority = !activePriorities || activePriorities.includes(node.data.priority);
+        if (matchesStatus && matchesPriority) {
+          graph.addNode(node.id, {
+            label: node.label,
+            size: PRIORITY_SIZES[node.data.priority] || 15,
+            color: PRIORITY_COLORS[node.data.priority] || '#1976d2',
+            nodeType: node.type,
+            data: node.data,
+          });
+        }
+      }
     });
 
-    // Add edges
-    graphData.edges.forEach(edge => {
+    // Add user nodes that are selected in filter
+    data.nodes.forEach(node => {
+      if (node.type === 'user') {
+        if (!activeUsers || activeUsers.includes(node.id)) {
+          graph.addNode(node.id, {
+            label: node.label,
+            size: nodeSizes.user,
+            color: nodeColors.user,
+            nodeType: node.type,
+            data: node.data,
+          });
+        }
+      }
+    });
+
+    data.edges.forEach(edge => {
       try {
         if (graph.hasNode(edge.source) && graph.hasNode(edge.target)) {
           graph.addEdge(edge.source, edge.target, {
             label: edge.label,
             edgeType: edge.type,
-            size: 2,
-            color: '#ccc',
+            type: 'arrow',
+            size: 6,
+            color: '#999',
           });
         }
       } catch (err) {
@@ -221,15 +293,116 @@ const ProjectGraph = () => {
         </Alert>
       )}
 
-      <Box display="flex" alignItems="center" gap={1} mb={1}>
-        <Typography variant="body2">Kliknutie</Typography>
-        <Switch
-          checked={dragMode}
-          onChange={(e) => setDragMode(e.target.checked)}
-          size="small"
-        />
-        <Typography variant="body2">Presúvanie</Typography>
-      </Box>
+      {!loading && !error && (
+        <Box display="flex" alignItems="flex-start" gap={2} mb={2}>
+
+          <Box display="flex" alignItems="center" gap={1}>
+            <Typography variant="body2">Kliknutie</Typography>
+            <Switch
+              checked={dragMode}
+              onChange={(e) => setDragMode(e.target.checked)}
+              size="small"
+            />
+            <Typography variant="body2">Presúvanie</Typography>
+          </Box>
+
+          <Accordion sx={{ flex: 1 }} disableGutters>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography variant="subtitle2">
+                Používatelia ({selectedUsers.length}/{filters.users.length})
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <FormGroup>
+                {filters.users.map(user => (
+                  <FormControlLabel
+                    key={user.accountId}
+                    control={
+                      <Checkbox
+                        checked={selectedUsers.includes(user.accountId)}
+                        onChange={(e) => {
+                          setSelectedUsers(prev =>
+                            e.target.checked
+                              ? [...prev, user.accountId]
+                              : prev.filter(id => id !== user.accountId)
+                          );
+                        }}
+                        size="small"
+                      />
+                    }
+                    label={user.displayName}
+                  />
+                ))}
+              </FormGroup>
+            </AccordionDetails>
+          </Accordion>
+
+          <Accordion sx={{ flex: 1 }} disableGutters>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography variant="subtitle2">
+                Stavy ({selectedStatuses.length}/{filters.statuses.length})
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <FormGroup>
+                {filters.statuses.map(status => (
+                  <FormControlLabel
+                    key={status}
+                    control={
+                      <Checkbox
+                        checked={selectedStatuses.includes(status)}
+                        onChange={(e) => {
+                          setSelectedStatuses(prev =>
+                            e.target.checked
+                              ? [...prev, status]
+                              : prev.filter(s => s !== status)
+                          );
+                        }}
+                        size="small"
+                      />
+                    }
+                    label={status}
+                  />
+                ))}
+              </FormGroup>
+            </AccordionDetails>
+          </Accordion>
+          <Accordion sx={{ flex: 1 }} disableGutters>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Typography variant="subtitle2">
+                Priorita ({selectedPriorities.length}/{filters.priorities.length})
+              </Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <FormGroup>
+                {filters.priorities.map(priority => (
+                  <FormControlLabel
+                    key={priority}
+                    control={
+                      <Checkbox
+                        checked={selectedPriorities.includes(priority)}
+                        onChange={(e) => {
+                          setSelectedPriorities(prev =>
+                            e.target.checked
+                              ? [...prev, priority]
+                              : prev.filter(p => p !== priority)
+                          );
+                        }}
+                        size="small"
+                        sx={{
+                          color: PRIORITY_COLORS[priority],
+                          '&.Mui-checked': { color: PRIORITY_COLORS[priority] }
+                        }}
+                      />
+                    }
+                    label={priority}
+                  />
+                ))}
+              </FormGroup>
+            </AccordionDetails>
+          </Accordion>
+        </Box>
+      )}
 
 
       {/* Graph Visualization */}
@@ -255,32 +428,18 @@ const ProjectGraph = () => {
 
           {/* Legend */}
           <Paper elevation={1} sx={{ mt: 2, p: 2 }}>
-            <Typography variant="subtitle2" gutterBottom>
-              Legenda
-            </Typography>
-            <Box display="flex" gap={3}>
+            <Typography variant="subtitle2" gutterBottom>Legenda</Typography>
+            <Box display="flex" gap={3} flexWrap="wrap">
               <Box display="flex" alignItems="center" gap={1}>
-                <Box
-                  sx={{
-                    width: 16,
-                    height: 16,
-                    borderRadius: '50%',
-                    bgcolor: '#1976d2',
-                  }}
-                />
-                <Typography variant="body2">Problémy</Typography>
-              </Box>
-              <Box display="flex" alignItems="center" gap={1}>
-                <Box
-                  sx={{
-                    width: 16,
-                    height: 16,
-                    borderRadius: '50%',
-                    bgcolor: '#2e7d32',
-                  }}
-                />
+                <Box sx={{ width: 16, height: 16, borderRadius: '50%', bgcolor: '#2e7d32' }} />
                 <Typography variant="body2">Používatelia</Typography>
               </Box>
+              {Object.entries(PRIORITY_COLORS).map(([priority, color]) => (
+                <Box key={priority} display="flex" alignItems="center" gap={1}>
+                  <Box sx={{ width: PRIORITY_SIZES[priority] / 2, height: PRIORITY_SIZES[priority] / 2, borderRadius: '50%', bgcolor: color }} />
+                  <Typography variant="body2">{priority}</Typography>
+                </Box>
+              ))}
             </Box>
           </Paper>
         </Box>

@@ -57,7 +57,10 @@ const saveProjectGraphToDB = async (projectData) => {
             conn.toKey,
             conn.type || "RELATED_TO"
           );
-          await session.run(query, { fromKey: conn.fromKey, toKey: conn.toKey });
+          await session.run(query, { 
+            fromKey: conn.fromKey, 
+            toKey: conn.toKey,
+          });
           results.connectionsCreated++;
         } catch (err) {
           results.errors.push(`Connection ${conn.fromKey}->${conn.toKey}: ${err.message}`);
@@ -80,7 +83,7 @@ const getProjectGraphFromDB = async (projectKey) => {
     const result = await session.run(`
       MATCH (i:Issue {projectKey: $projectKey})
       OPTIONAL MATCH (i)-[r]-(connected)
-      RETURN i, collect({rel: r, node: connected}) as connections
+      RETURN i, collect({rel: r, relType: type(r), node: connected}) as connections
     `, { projectKey });
 
     const nodes = [];
@@ -137,11 +140,11 @@ const getProjectGraphFromDB = async (projectKey) => {
           // Add edge
           if (connectedId) {
             edges.push({
-              id: `${issueId}-${rel.type}-${connectedId}`,
+              id: `${issueId}-${conn.relType}-${connectedId}`,
               source: issueId,
               target: connectedId,
-              label: rel.type,
-              type: rel.type
+              label: conn.relType.toLowerCase().replace(/_/g, ' '),
+              type: conn.relType
             });
           }
         }
@@ -156,4 +159,62 @@ const getProjectGraphFromDB = async (projectKey) => {
   }
 }
 
-module.exports = { saveProjectGraphToDB, getProjectGraphFromDB };
+const getProjectUsers = async (projectKey) => {
+  const session = driver.session();
+  try {
+    const result = await session.run(`
+      MATCH (i:Issue {projectKey: $projectKey})-[:ASSIGNED_TO]->(u:User)
+      RETURN DISTINCT u.accountId as accountId, u.displayName as displayName
+      ORDER BY u.displayName
+    `, { projectKey });
+
+    return result.records.map(r => ({
+      accountId: r.get('accountId'),
+      displayName: r.get('displayName'),
+    }));
+  } finally {
+    await session.close();
+  }
+};
+
+const getProjectStatuses = async (projectKey) => {
+  const session = driver.session();
+  try {
+    const result = await session.run(`
+      MATCH (i:Issue {projectKey: $projectKey})
+      RETURN DISTINCT i.status as status
+      ORDER BY i.status
+    `, { projectKey });
+
+    return result.records
+      .map(r => r.get('status'))
+      .filter(Boolean);
+  } finally {
+    await session.close();
+  }
+};
+
+const getProjectPriorities = async (projectKey) => {
+  const session = driver.session();
+  try {
+    const result = await session.run(`
+      MATCH (i:Issue {projectKey: $projectKey})
+      RETURN DISTINCT i.priority as priority
+      ORDER BY i.priority
+    `, { projectKey });
+
+    return result.records
+      .map(r => r.get('priority'))
+      .filter(Boolean);
+  } finally {
+    await session.close();
+  }
+};
+
+module.exports = { 
+  saveProjectGraphToDB, 
+  getProjectGraphFromDB, 
+  getProjectUsers, 
+  getProjectStatuses,
+  getProjectPriorities
+};

@@ -55,9 +55,11 @@ const transformJiraDataToGraph = (jiraIssues) => {
     };
     issues.push(issueData);
 
-    // Extract users (assignee, reporter, creator)
-    const userFields = ["assignee", "reporter", "creator"];
-    userFields.forEach((fieldName) => {
+    const userFieldLabels = {
+      assignee: { type: "ASSIGNED_TO", displayLabel: "assigned to" },
+    };
+
+    Object.keys(userFieldLabels).forEach((fieldName) => {
       const user = fields[fieldName];
       if (user && user.accountId) {
         if (!users.has(user.accountId)) {
@@ -69,13 +71,13 @@ const transformJiraDataToGraph = (jiraIssues) => {
           });
         }
 
-        // Create connection between issue and user
         connections.push({
           fromLabel: "Issue",
           fromKey: issue.key,
           toLabel: "User",
           toKey: user.accountId,
-          type: fieldName.toUpperCase(), // ASSIGNEE, REPORTER, CREATOR
+          type: "ASSIGNED_TO",
+          displayLabel: "assigned to",
         });
       }
     });
@@ -83,21 +85,15 @@ const transformJiraDataToGraph = (jiraIssues) => {
     // Extract issue links (connections between issues)
     if (fields.issuelinks && fields.issuelinks.length > 0) {
       fields.issuelinks.forEach((link) => {
-        let linkedIssueKey = null;
-
+        // Only process outward links to avoid duplicates in both directions
         if (link.outwardIssue) {
-          linkedIssueKey = link.outwardIssue.key;
-        } else if (link.inwardIssue) {
-          linkedIssueKey = link.inwardIssue.key;
-        }
-
-        if (linkedIssueKey) {
           connections.push({
             fromLabel: "Issue",
             fromKey: issue.key,
             toLabel: "Issue",
-            toKey: linkedIssueKey,
-            type: "LINKED_TO",
+            toKey: link.outwardIssue.key,
+            type: link.type?.outward?.toUpperCase().replace(/ /g, "_") || "LINKED_TO",
+            displayLabel: link.type?.outward || "linked to",
           });
         }
       });
