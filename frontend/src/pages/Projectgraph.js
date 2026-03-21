@@ -87,10 +87,10 @@ const ProjectGraph = () => {
         setError(null);
 
         const [graphRes, usersRes, statusesRes, prioritiesRes] = await Promise.all([
-          fetch(`http://localhost:5000/api/database/graph/${projectId}`),
-          fetch(`http://localhost:5000/api/database/graph/users/${projectId}`),
-          fetch(`http://localhost:5000/api/database/graph/statuses/${projectId}`),
-          fetch(`http://localhost:5000/api/database/graph/priorities/${projectId}`),
+          fetch(`http://localhost:5000/api/database/project/${projectId}/graph`),
+          fetch(`http://localhost:5000/api/database/project/${projectId}/users`),
+          fetch(`http://localhost:5000/api/database/project/${projectId}/statuses`),
+          fetch(`http://localhost:5000/api/database/project/${projectId}/priorities`),
         ]);
 
         if (!graphRes.ok) throw new Error('Nepodarilo sa načítať údaje grafu');
@@ -217,8 +217,8 @@ const ProjectGraph = () => {
     };
 
     const nodeSizes = {
-      user: 30,
-      page: 15,
+      user: 25,
+      page: 10,
     };
 
     // Add issue nodes with saved positions
