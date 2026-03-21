@@ -20,6 +20,10 @@ const JiraCredentials = {
     );
     return result.rows[0];
   },
+
+  async clear() {
+    await pool.query("DELETE FROM jira_credentials WHERE id = 1");
+  },
 };
 
 module.exports = JiraCredentials;

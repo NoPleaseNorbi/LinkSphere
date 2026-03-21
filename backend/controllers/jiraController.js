@@ -136,9 +136,47 @@ const saveProjectGraph = async (req, res) => {
   }
 };
 
+const getConnectionStatus = async (req, res) => {
+  try {
+    const creds = await JiraCredentials.get();
+    if (!creds) {
+      return res.json({ connected: false });
+    }
+
+    // Verify credentials are still valid
+    const atlassian = createAtlassianClient(creds.email, creds.api_token, creds.domain);
+    await atlassian.get('/rest/api/3/myself');
+
+    res.json({
+      connected: true,
+      email: creds.email,
+      domain: creds.domain,
+    });
+  } catch (err) {
+    res.json({ connected: false });
+  }
+};
+
+const disconnectCredentials = async (req, res) => {
+  try {
+    // Clear PostgreSQL credentials
+    await JiraCredentials.clear();
+
+    // Clear Neo4j database
+    const { clearDatabase } = require('../models/graphModel');
+    await clearDatabase();
+
+    res.json({ success: true, message: 'Credentials cleared and database wiped' });
+  } catch (err) {
+    console.error('Disconnect error:', err.message);
+    res.status(500).json({ error: 'Failed to disconnect' });
+  }
+};
  
 module.exports = {
   saveCredentials,
   getProjects,
-  saveProjectGraph
+  saveProjectGraph,
+  getConnectionStatus,
+  disconnectCredentials
 }

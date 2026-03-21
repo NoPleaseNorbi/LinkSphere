@@ -175,6 +175,9 @@ const Settings = () => {
 
 const handleCloseDialog = () => {
   setDialogOpen(false);
+  if (dialogData.success) {
+    window.location.reload();
+  }
 };
 
 

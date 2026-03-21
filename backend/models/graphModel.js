@@ -330,6 +330,15 @@ const getUserGraphFromDB = async (accountId) => {
   }
 };
 
+const clearDatabase = async () => {
+  const session = driver.session();
+  try {
+    await session.run('MATCH (n) DETACH DELETE n');
+  } finally {
+    await session.close();
+  }
+};
+
 module.exports = { 
   saveProjectGraphToDB, 
   getProjectGraphFromDB, 
@@ -337,5 +346,6 @@ module.exports = {
   getProjectStatuses,
   getProjectPriorities,
   getAllUsers,
-  getUserGraphFromDB
+  getUserGraphFromDB,
+  clearDatabase
 };

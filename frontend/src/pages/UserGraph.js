@@ -173,7 +173,7 @@ const UserGraph = () => {
             label: edge.label,
             edgeType: edge.type,
             type: 'arrow',
-            size: 6,
+            size: 2,
             color: '#999',
           });
         }
