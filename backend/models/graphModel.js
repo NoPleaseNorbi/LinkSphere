@@ -237,7 +237,7 @@ const getUserGraphFromDB = async (accountId) => {
   try {
     const result = await session.run(`
       MATCH (u:User {accountId: $accountId})
-      OPTIONAL MATCH (u)-[r]->(connected)
+      OPTIONAL MATCH (u)<-[r]-(connected)
       RETURN u, collect({rel: r, relType: type(r), node: connected}) as connections
     `, { accountId });
 
