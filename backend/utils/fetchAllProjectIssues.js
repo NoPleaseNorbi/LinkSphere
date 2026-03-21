@@ -23,6 +23,7 @@ const fetchAllProjectIssues = async (atlassian, projectKey) => {
           "reporter",
           "creator",
           "issuelinks",
+          "parent",
         ].join(","),
       },
     });

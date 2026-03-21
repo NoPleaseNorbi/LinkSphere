@@ -8,6 +8,8 @@ import Documentation from './pages/Documentation';
 import Settings from './pages/Settings';
 import Projects from './pages/Projects';
 import ProjectGraph from './pages/Projectgraph';
+import Users from './pages/Users';
+import UserGraph from './pages/UserGraph';
 
 const theme = createTheme({
   palette: {
@@ -33,6 +35,8 @@ function App() {
           <Route path="/settings" element={<Settings />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/project/:projectId/graph" element={<ProjectGraph />} />
+          <Route path="/users" element={<Users />} />
+          <Route path="/user/:accountId/graph" element={<UserGraph />} />
         </Routes>
       </Router>
     </ThemeProvider>

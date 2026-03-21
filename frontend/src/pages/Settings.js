@@ -247,7 +247,7 @@ const handleCloseDialog = () => {
               name="domain"
               value={credentials.domain}
               onChange={handleChange}
-              placeholder="vasaspolecnost.atlassian.net"
+              placeholder="vasaspolocnost.atlassian.net"
               margin="normal"
               required
               disabled={loading}

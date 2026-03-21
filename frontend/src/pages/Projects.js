@@ -161,7 +161,7 @@ const Projects = () => {
             Projekty
           </Typography>
           <Button variant="outlined" size="small" onClick={refreshProjects} startIcon={<RefreshIcon />}>
-            Obnoviť
+            Obnoviť a synchronizovat projekty
           </Button>
         </Box>
 
@@ -201,14 +201,14 @@ const Projects = () => {
                         {project.name}
                       </Typography>
                     }
-                    subheader={
-                      <Typography variant="body2" color="text.secondary" component="span">
-                        {project.key}
-                      </Typography>
-                    }
                   />
 
                   <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                    {project.key && (
+                      <Typography variant="body2" color="text.primary">
+                        {project.key}
+                      </Typography>
+                    )}
                     {project.projectTypeKey && (
                       <Chip
                         label={project.projectTypeKey.charAt(0).toUpperCase() + project.projectTypeKey.slice(1)}

@@ -46,6 +46,13 @@ const NavigationBar = () => {
           >
             Projekty
           </Button>
+          <Button 
+            color="inherit" 
+            component={RouterLink} 
+            to="/users"
+          >
+            Používatelia
+          </Button>
         </Box>
       </Toolbar>
     </AppBar>

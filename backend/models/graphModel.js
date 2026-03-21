@@ -82,7 +82,7 @@ const getProjectGraphFromDB = async (projectKey) => {
     // Query to get all nodes and relationships for a project
     const result = await session.run(`
       MATCH (i:Issue {projectKey: $projectKey})
-      OPTIONAL MATCH (i)-[r]-(connected)
+      OPTIONAL MATCH (i)-[r]->(connected)
       RETURN i, collect({rel: r, relType: type(r), node: connected}) as connections
     `, { projectKey });
 
@@ -211,10 +211,96 @@ const getProjectPriorities = async (projectKey) => {
   }
 };
 
+const getAllUsers = async () => {
+  const session = driver.session();
+  try {
+    const result = await session.run(`
+      MATCH (u:User)
+      RETURN u.accountId as accountId, u.displayName as displayName, 
+             u.emailAddress as emailAddress, u.avatarUrl as avatarUrl
+      ORDER BY u.displayName
+    `);
+
+    return result.records.map(r => ({
+      accountId: r.get('accountId'),
+      displayName: r.get('displayName'),
+      emailAddress: r.get('emailAddress'),
+      avatarUrl: r.get('avatarUrl'),
+    }));
+  } finally {
+    await session.close();
+  }
+};  
+
+const getUserGraphFromDB = async (accountId) => {
+  const session = driver.session();
+  try {
+    const result = await session.run(`
+      MATCH (u:User {accountId: $accountId})
+      OPTIONAL MATCH (u)-[r]->(connected)
+      RETURN u, collect({rel: r, relType: type(r), node: connected}) as connections
+    `, { accountId });
+
+    const nodes = [];
+    const edges = [];
+    const nodeIds = new Set();
+
+    result.records.forEach(record => {
+      const user = record.get('u').properties;
+      const userId = user.accountId;
+
+      if (!nodeIds.has(userId)) {
+        nodes.push({
+          id: userId,
+          label: user.displayName,
+          type: 'user',
+          data: user,
+        });
+        nodeIds.add(userId);
+      }
+
+      const connections = record.get('connections');
+      connections.forEach(conn => {
+        if (conn.rel && conn.node) {
+          const connectedNode = conn.node.properties;
+          const connectedId = connectedNode.key || connectedNode.accountId;
+
+          if (connectedId && !nodeIds.has(connectedId)) {
+            const nodeType = conn.node.labels[0].toLowerCase();
+            nodes.push({
+              id: connectedId,
+              label: connectedNode.displayName || connectedNode.key,
+              type: nodeType,
+              data: connectedNode,
+            });
+            nodeIds.add(connectedId);
+          }
+
+          if (connectedId) {
+            edges.push({
+              id: `${userId}-${conn.relType}-${connectedId}`,
+              source: userId,
+              target: connectedId,
+              label: conn.relType.toLowerCase().replace(/_/g, ' '),
+              type: conn.relType,
+            });
+          }
+        }
+      });
+    });
+
+    return { nodes, edges };
+  } finally {
+    await session.close();
+  }
+};
+
 module.exports = { 
   saveProjectGraphToDB, 
   getProjectGraphFromDB, 
   getProjectUsers, 
   getProjectStatuses,
-  getProjectPriorities
+  getProjectPriorities,
+  getAllUsers,
+  getUserGraphFromDB
 };

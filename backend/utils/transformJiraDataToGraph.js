@@ -98,6 +98,16 @@ const transformJiraDataToGraph = (jiraIssues) => {
         }
       });
     }
+    if (fields.parent) {
+      connections.push({
+        fromLabel: "Issue",
+        fromKey: issue.key,
+        toLabel: "Issue",
+        toKey: fields.parent.key,
+        type: "SUBTASK_OF",
+        displayLabel: "subtask of",
+      });
+    }
   });
 
   return {

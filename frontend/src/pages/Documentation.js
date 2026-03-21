@@ -68,20 +68,6 @@ const Documentation = () => {
               </Typography>
             </AccordionDetails>
           </Accordion>
-
-          <Accordion>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="h6">API Referencia</Typography>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Typography paragraph>
-                API dokumentácia pre vývojárov integrujúcich sa s platformou Jira Knowledge Graph.
-              </Typography>
-              <Typography>
-                Podrobná referenčná dokumentácia API bude k dispozícii tu.
-              </Typography>
-            </AccordionDetails>
-          </Accordion>
         </Box>
       </Box>
     </Container>

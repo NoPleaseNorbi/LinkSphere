@@ -1,4 +1,11 @@
-const { getProjectGraphFromDB, getProjectUsers, getProjectStatuses, getProjectPriorities } = require("../models/graphModel");
+const { 
+  getProjectGraphFromDB, 
+  getProjectUsers, 
+  getProjectStatuses, 
+  getProjectPriorities, 
+  getAllUsers, 
+  getUserGraphFromDB 
+} = require("../models/graphModel");
 
 const getProjectGraph = async (req, res) => {
   try {
@@ -56,4 +63,35 @@ const getProjectPrioritiesHandler = async (req, res) => {
   }
 };
 
-module.exports = { getProjectGraph, getProjectUsersHandler, getProjectStatusesHandler, getProjectPrioritiesHandler };
+const getAllUsersHandler = async (req, res) => {
+  try {
+    const users = await getAllUsers();
+    res.json({ users });
+  } catch (err) {
+    console.error("Get all users error:", err.message);
+    res.status(500).json({ error: "Failed to get users" });
+  }
+};
+
+const getUserGraph = async (req, res) => {
+  try {
+    const { accountId } = req.params;
+    if (!accountId) {
+      return res.status(400).json({ error: "Account ID is required" });
+    }
+    const graphData = await getUserGraphFromDB(accountId);
+    res.json({ success: true, accountId, graph: graphData });
+  } catch (err) {
+    console.error("Get user graph error:", err.message);
+    res.status(500).json({ error: "Failed to get user graph" });
+  }
+};
+
+module.exports = { 
+  getProjectGraph, 
+  getProjectUsersHandler, 
+  getProjectStatusesHandler, 
+  getProjectPrioritiesHandler, 
+  getAllUsersHandler, 
+  getUserGraph 
+};
