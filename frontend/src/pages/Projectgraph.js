@@ -17,12 +17,15 @@ import {
   AccordionDetails,
   FormGroup,
   FormControlLabel,
-  Checkbox
+  Checkbox,
+  TextField,
+  InputAdornment
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CloseIcon from '@mui/icons-material/Close';
 import Graph from 'graphology';
 import Sigma from 'sigma';
+import SearchIcon from '@mui/icons-material/Search';
 import { circular } from 'graphology-layout';
 import forceAtlas2 from 'graphology-layout-forceatlas2';
 
@@ -62,6 +65,8 @@ const ProjectGraph = () => {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectedStatuses, setSelectedStatuses] = useState([]);
   const [selectedPriorities, setSelectedPriorities] = useState([]);
+  const [nodeSearch, setNodeSearch] = useState('');
+  const [searchError, setSearchError] = useState(false);
 
   useEffect(() => {
     dragModeRef.current = dragMode;
@@ -127,6 +132,42 @@ const ProjectGraph = () => {
       }
     };
   }, [projectId]);
+
+  const searchNode = (query) => {
+    setNodeSearch(query);
+    setSearchError(false);
+
+    if (!query || !sigmaRef.current || !graphDataRef.current) return;
+
+    const sigma = sigmaRef.current;
+    const graph = sigma.getGraph();
+
+    // Find node by key or summary
+    const match = graph.nodes().find(nodeId => {
+      const attrs = graph.getNodeAttributes(nodeId);
+      return (
+        nodeId.toLowerCase().includes(query.toLowerCase()) ||
+        attrs.data?.summary?.toLowerCase().includes(query.toLowerCase())
+      );
+    });
+
+    if (!match) {
+      setSearchError(true);
+      return;
+    }
+
+    // Highlight the node
+    graph.nodes().forEach(nodeId => {
+      graph.setNodeAttribute(nodeId, 'highlighted', nodeId === match);
+    });
+
+    // Animate camera to the node
+    const nodePosition = sigma.getNodeDisplayData(match);
+    sigma.getCamera().animate(
+      { x: nodePosition.x, y: nodePosition.y, ratio: 0.3 },
+      { duration: 500 }
+    );
+  };
 
   const initGraph = (data) => {
     const tempGraph = new Graph();
@@ -325,6 +366,17 @@ const ProjectGraph = () => {
   const handleCloseDrawer = () => {
     setDrawerOpen(false);
   };
+
+  useEffect(() => {
+    if (!nodeSearch && sigmaRef.current) {
+      const graph = sigmaRef.current.getGraph();
+      graph.nodes().forEach(nodeId => {
+        graph.removeNodeAttribute(nodeId, 'highlighted');
+      });
+      setSearchError(false);
+    }
+  }, [nodeSearch]);
+
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       {/* Page Title */}
@@ -359,7 +411,24 @@ const ProjectGraph = () => {
             />
             <Typography variant="body2">Presúvanie</Typography>
           </Box>
-
+          <Box display="flex" alignItems="center" gap={1} sx={{ flex: 1 }}>
+            <TextField
+              size="small"
+              placeholder="Hľadať úlohu..."
+              value={nodeSearch}
+              onChange={(e) => searchNode(e.target.value)}
+              error={searchError}
+              helperText={searchError ? 'Úloha nenájdená' : ''}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ width: 220 }}
+            />
+          </Box>
           <Accordion sx={{ flex: 1 }} disableGutters>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="subtitle2">
