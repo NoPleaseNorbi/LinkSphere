@@ -1,6 +1,8 @@
 module.exports = (fromLabel, fromKey, toLabel, toKey, relationshipType) => {
-  const fromProperty = fromLabel === "Issue" ? "key" : "accountId";
-  const toProperty = toLabel === "Issue" ? "key" : "accountId";
+  const fromProperty = fromLabel === 'Issue' ? 'key' : 
+                       fromLabel === 'User' ? 'accountId' : 'pageId';
+  const toProperty = toLabel === 'Issue' ? 'key' : 
+                     toLabel === 'User' ? 'accountId' : 'pageId';
   
   return `
     MATCH (from:${fromLabel} {${fromProperty}: $fromKey})

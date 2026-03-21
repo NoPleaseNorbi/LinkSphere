@@ -190,10 +190,10 @@ const handleCloseDialog = () => {
 
         <Paper elevation={3} sx={{ p: 4 }}>
           <Typography variant="h5" component="h2" gutterBottom>
-            Prihlasovacie údaje do Jira
+            Prihlasovacie údaje do Atlassian
           </Typography>
           <Typography variant="body2" color="text.secondary" paragraph>
-            Konfigurujte svoje prihlasovacie údaje do Atlassian Jira na načítanie a vizualizáciu údajov o vašich projektoch.
+            Konfigurujte svoje prihlasovacie údaje do Atlassian na načítanie a vizualizáciu údajov o vašich projektoch.
           </Typography>
 
           {error && (

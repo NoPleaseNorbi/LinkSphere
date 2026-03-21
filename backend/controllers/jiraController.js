@@ -2,6 +2,7 @@ const JiraCredentials = require("../models/jiraCredentials");
 const createAtlassianClient = require("../utils/atlassianClient");
 const fetchAllProjectIssues = require("../utils/fetchAllProjectIssues");
 const transformJiraDataToGraph = require("../utils/transformJiraDataToGraph");
+const fetchConfluencePages = require('../utils/fetchConfluencePages');
 const { saveProjectGraphToDB } = require("../models/graphModel");
 
 const saveCredentials = async (req, res) => {
@@ -80,8 +81,34 @@ const saveProjectGraph = async (req, res) => {
     // Transform Jira data to graph format
     const graphData = transformJiraDataToGraph(issues);
 
+    const pages = [];
+    const pageConnections = [];
+    const pageIds = new Set();
+    
+    for (const issue of issues) {
+      const confluencePages = await fetchConfluencePages(atlassian, issue.key);
+      
+      for (const page of confluencePages) {
+        if (!pageIds.has(page.pageId)) {
+          pages.push({
+            pageId: page.pageId,
+            title: page.title,
+            url: page.url,
+          });
+          pageIds.add(page.pageId);
+        }
+
+        pageConnections.push({
+          fromLabel: 'Issue',
+          fromKey: issue.key,
+          toLabel: 'Page',
+          toKey: page.pageId,
+          type: 'LINKED_TO_PAGE',
+        });
+      }
+    }
     // Save to Neo4j
-    const results = await saveProjectGraphToDB(graphData);
+    const results = await saveProjectGraphToDB({ ...graphData, pages, pageConnections });
 
     res.json({
       success: true,
@@ -91,6 +118,7 @@ const saveProjectGraph = async (req, res) => {
         usersCreated: results.usersCreated,
         issuesCreated: results.issuesCreated,
         connectionsCreated: results.connectionsCreated,
+        pagesCreated: results.pagesCreated,
         errors: results.errors,
       },
     });

@@ -12,6 +12,7 @@ import {
   Alert,
   Button,
   CardActionArea,
+  TextField
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import PersonIcon from '@mui/icons-material/Person';
@@ -19,6 +20,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 
 const Users = () => {
   const navigate = useNavigate();
+  const [search, setSearch] = React.useState('');
   const [users, setUsers] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
@@ -45,6 +47,11 @@ const Users = () => {
       setLoading(false);
     }
   };
+
+  const filteredUsers = users.filter(user =>
+    user.displayName.toLowerCase().includes(search.toLowerCase()) ||
+    (user.emailAddress && user.emailAddress.toLowerCase().includes(search.toLowerCase()))
+  );
 
   React.useEffect(() => {
     fetchUsers();
@@ -117,13 +124,21 @@ const Users = () => {
             Obnoviť používateľov
           </Button>
         </Box>
+        <TextField
+          fullWidth
+          size="small"
+          placeholder="Hľadať podľa mena alebo emailu..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          sx={{ mb: 2 }}
+        />
 
         <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-          {users.length} {users.length === 1 ? 'používateľ' : 'používateľov'} nájdených — Kliknite na používateľa pre zobrazenie jeho grafu
+          {filteredUsers.length} {filteredUsers.length === 1 ? 'používateľ' : 'používateľov'} nájdených
         </Typography>
-
+        
         <Grid container spacing={3}>
-          {users.map((user) => (
+          {filteredUsers.map((user) => (
             <Grid key={user.accountId} item xs={12} sm={6} md={4}>
               <Card
                 elevation={2}

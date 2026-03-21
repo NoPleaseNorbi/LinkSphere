@@ -34,6 +34,7 @@ const PRIORITY_COLORS = {
   'Lowest':  '#90caf9',
 };
 
+/*
 const PRIORITY_SIZES = {
   'Highest': 24,
   'High':    20,
@@ -41,6 +42,7 @@ const PRIORITY_SIZES = {
   'Low':     12,
   'Lowest':  10,
 };
+*/
 
 const UserGraph = () => {
   const { accountId } = useParams();
@@ -154,7 +156,7 @@ const UserGraph = () => {
         if (matchesStatus && matchesPriority) {
           graph.addNode(node.id, {
             label: node.label,
-            size: PRIORITY_SIZES[node.data.priority] || 15,
+            size: 15,
             color: PRIORITY_COLORS[node.data.priority] || '#1976d2',
             nodeType: node.type,
             data: node.data,
@@ -359,8 +361,8 @@ const UserGraph = () => {
               {Object.entries(PRIORITY_COLORS).map(([priority, color]) => (
                 <Box key={priority} display="flex" alignItems="center" gap={1}>
                   <Box sx={{
-                    width: PRIORITY_SIZES[priority] / 2,
-                    height: PRIORITY_SIZES[priority] / 2,
+                    width: 15,
+                    height: 15,
                     borderRadius: '50%',
                     bgcolor: color
                   }} />

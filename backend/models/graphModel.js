@@ -2,6 +2,7 @@ const neo4j = require("neo4j-driver");
 const createUserQuery = require("../models/createUser");
 const createIssueQuery = require("../models/createIssue");
 const createConnectionQuery = require("../models/createConnection");
+const createPageQuery = require('../models/createPage');
 
 // Initialize driver once
 const uri = process.env.NEO4J_URI || "bolt://localhost:7687";
@@ -11,11 +12,12 @@ const password = process.env.NEO4J_PASSWORD;
 const driver = neo4j.driver(uri, neo4j.auth.basic(user, password));
 
 const saveProjectGraphToDB = async (projectData) => {
-  const { issues, users, connections } = projectData;
+  const { issues, users, connections, pages, pageConnections } = projectData;
   const results = {
     usersCreated: 0,
     issuesCreated: 0,
     connectionsCreated: 0,
+    pagesCreated: 0,
     errors: [],
   };
 
@@ -64,6 +66,39 @@ const saveProjectGraphToDB = async (projectData) => {
           results.connectionsCreated++;
         } catch (err) {
           results.errors.push(`Connection ${conn.fromKey}->${conn.toKey}: ${err.message}`);
+        }
+      }
+    }
+
+    if (pages && pages.length > 0) {
+      for (const page of pages) {
+        try {
+          await session.run(createPageQuery, page);
+          results.pagesCreated++;
+        } catch (err) {
+          results.errors.push(`Page ${page.pageId}: ${err.message}`);
+        }
+      }
+    }
+
+    // Save page connections
+    if (pageConnections && pageConnections.length > 0) {
+      for (const conn of pageConnections) {
+        try {
+          const query = createConnectionQuery(
+            conn.fromLabel,
+            conn.fromKey,
+            conn.toLabel,
+            conn.toKey,
+            conn.type
+          );
+          await session.run(query, {
+            fromKey: conn.fromKey,
+            toKey: conn.toKey,
+          });
+          results.connectionsCreated++;
+        } catch (err) {
+          results.errors.push(`Page connection ${conn.fromKey}->${conn.toKey}: ${err.message}`);
         }
       }
     }
@@ -123,14 +158,14 @@ const getProjectGraphFromDB = async (projectKey) => {
         if (conn.rel && conn.node) {
           const rel = conn.rel;
           const connectedNode = conn.node.properties;
-          const connectedId = connectedNode.key || connectedNode.accountId;
+          const connectedId = connectedNode.key || connectedNode.accountId || connectedNode.pageId;
 
           // Add connected node if not already added
           if (connectedId && !nodeIds.has(connectedId)) {
             const nodeType = conn.node.labels[0].toLowerCase();
             nodes.push({
               id: connectedId,
-              label: connectedNode.displayName || connectedNode.key,
+              label: connectedNode.displayName || connectedNode.key || connectedNode.title,
               type: nodeType,
               data: connectedNode
             });

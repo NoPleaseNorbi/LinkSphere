@@ -35,6 +35,7 @@ const PRIORITY_COLORS = {
   'Lowest':  '#90caf9',
 };
 
+/*
 const PRIORITY_SIZES = {
   'Highest': 24,
   'High':    20,
@@ -42,18 +43,21 @@ const PRIORITY_SIZES = {
   'Low':     12,
   'Lowest':  10,
 };
+*/
 
 const ProjectGraph = () => {
   const { projectId } = useParams(); // Get projectId from URL
   const containerRef = useRef(null);
   const sigmaRef = useRef(null);
   const dragModeRef = useRef(false);
+  const nodePositionsRef = useRef({});
+  const graphDataRef = useRef(null);
+  const cameraStateRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedNode, setSelectedNode] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [dragMode, setDragMode] = useState(false);
-  const graphDataRef = useRef(null);
   const [filters, setFilters] = useState({ users: [], statuses: [], priorities: [] });
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectedStatuses, setSelectedStatuses] = useState([]);
@@ -101,6 +105,7 @@ const ProjectGraph = () => {
         const allPriorities = prioritiesData.priorities;
 
         graphDataRef.current = data.graph;
+        initGraph(data.graph);
         setFilters({ users: usersData.users, statuses: allStatuses, priorities: allPriorities });
         setSelectedUsers(allUserIds);
         setSelectedStatuses(allStatuses);
@@ -123,55 +128,113 @@ const ProjectGraph = () => {
     };
   }, [projectId]);
 
+  const initGraph = (data) => {
+    const tempGraph = new Graph();
+
+    // Add all nodes to compute layout
+    data.nodes.forEach(node => {
+      tempGraph.addNode(node.id, {
+        x: Math.random(),
+        y: Math.random(),
+        size: node.type === 'issue' ? (15) :
+              node.type === 'user' ? 30 : 15,
+      });
+    });
+
+    data.edges.forEach(edge => {
+      try {
+        if (tempGraph.hasNode(edge.source) && tempGraph.hasNode(edge.target)) {
+          tempGraph.addEdge(edge.source, edge.target);
+        }
+      } catch (err) {}
+    });
+
+    // Compute layout once
+    circular.assign(tempGraph);
+    const settings = forceAtlas2.inferSettings(tempGraph);
+    forceAtlas2.assign(tempGraph, { iterations: 50, settings });
+
+    // Save positions
+    tempGraph.nodes().forEach(nodeId => {
+      const attrs = tempGraph.getNodeAttributes(nodeId);
+      nodePositionsRef.current[nodeId] = { x: attrs.x, y: attrs.y };
+    });
+  };
+
   const renderGraph = (data, activeUsers, activeStatuses, activePriorities) => {
+    if (sigmaRef.current) {
+      cameraStateRef.current = sigmaRef.current.getCamera().getState();
+      sigmaRef.current.kill();
+    }
     if (!containerRef.current) return;
 
-    // Create a new graph
     const graph = new Graph();
 
-    // Define colors for different node types
     const nodeColors = {
-      issue: '#1976d2',
       user: '#2e7d32',
+      page: '#0052CC',
     };
 
     const nodeSizes = {
-      issue: 15,
-      user: 10,
+      user: 30,
+      page: 15,
     };
 
-    // Add nodes
+    // Add issue nodes with saved positions
     data.nodes.forEach(node => {
       if (node.type === 'issue') {
         const matchesStatus = !activeStatuses || activeStatuses.includes(node.data.status);
         const matchesPriority = !activePriorities || activePriorities.includes(node.data.priority);
         if (matchesStatus && matchesPriority) {
+          const pos = nodePositionsRef.current[node.id] || { x: Math.random(), y: Math.random() };
           graph.addNode(node.id, {
             label: node.label,
-            size: PRIORITY_SIZES[node.data.priority] || 15,
+            size: 15,
             color: PRIORITY_COLORS[node.data.priority] || '#1976d2',
             nodeType: node.type,
             data: node.data,
+            x: pos.x,
+            y: pos.y,
           });
         }
       }
     });
 
-    // Add user nodes that are selected in filter
+    // Add user nodes with saved positions
     data.nodes.forEach(node => {
       if (node.type === 'user') {
         if (!activeUsers || activeUsers.includes(node.id)) {
+          const pos = nodePositionsRef.current[node.id] || { x: Math.random(), y: Math.random() };
           graph.addNode(node.id, {
             label: node.label,
             size: nodeSizes.user,
             color: nodeColors.user,
             nodeType: node.type,
             data: node.data,
+            x: pos.x,
+            y: pos.y,
           });
         }
       }
     });
 
+    // Add page nodes with saved positions
+    data.nodes.forEach(node => {
+      if (node.type === 'page') {
+        const pos = nodePositionsRef.current[node.id] || { x: Math.random(), y: Math.random() };
+        graph.addNode(node.id, {
+          label: node.label,
+          size: nodeSizes.page,
+          color: nodeColors.page,
+          nodeType: node.type,
+          data: node.data,
+          x: pos.x,
+          y: pos.y,
+        });
+      }
+    });
+
+    // Add edges
     data.edges.forEach(edge => {
       try {
         if (graph.hasNode(edge.source) && graph.hasNode(edge.target)) {
@@ -179,29 +242,16 @@ const ProjectGraph = () => {
             label: edge.label,
             edgeType: edge.type,
             type: 'arrow',
-            size: 6,
+            size: 2,
             color: '#999',
           });
         }
-      } catch (err) {
-        // Edge might already exist, skip
-      }
+      } catch (err) {}
     });
 
-    // Apply circular layout first (gives initial x,y positions)
-    circular.assign(graph);
+    // No layout computation here - positions already set above
 
-    // Apply force-directed layout
-    const settings = forceAtlas2.inferSettings(graph);
-    forceAtlas2.assign(graph, {
-      iterations: 50,
-      settings: settings,
-    });
-
-    // Create Sigma instance
-    if (sigmaRef.current) {
-      sigmaRef.current.kill();
-    }
+    if (sigmaRef.current) sigmaRef.current.kill();
 
     const sigma = new Sigma(graph, containerRef.current, {
       renderEdgeLabels: true,
@@ -210,6 +260,10 @@ const ProjectGraph = () => {
       labelWeight: 'bold',
       allowInvalidContainer: true,
     });
+
+    if (cameraStateRef.current) {
+      sigma.getCamera().setState(cameraStateRef.current);
+    }
 
     sigmaRef.current = sigma;
 
@@ -436,10 +490,14 @@ const ProjectGraph = () => {
               </Box>
               {Object.entries(PRIORITY_COLORS).map(([priority, color]) => (
                 <Box key={priority} display="flex" alignItems="center" gap={1}>
-                  <Box sx={{ width: PRIORITY_SIZES[priority] / 2, height: PRIORITY_SIZES[priority] / 2, borderRadius: '50%', bgcolor: color }} />
+                  <Box sx={{ width: 15, height: 15, borderRadius: '50%', bgcolor: color }} />
                   <Typography variant="body2">{priority}</Typography>
                 </Box>
               ))}
+              <Box display="flex" alignItems="center" gap={1}>
+                <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: '#0052CC' }} />
+                <Typography variant="body2">Confluence stránky</Typography>
+              </Box>
             </Box>
           </Paper>
         </Box>
@@ -461,7 +519,9 @@ const ProjectGraph = () => {
           <>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
               <Typography variant="h6">
-                {selectedNode.nodeType === 'issue' ? 'Detaily problému' : 'Detaily používateľa'}
+                {selectedNode.nodeType === 'issue' ? 'Detaily problému' : 
+                selectedNode.nodeType === 'user' ? 'Detaily používateľa' : 
+                'Confluence stránka'}
               </Typography>
               <IconButton onClick={handleCloseDrawer}>
                 <CloseIcon />
@@ -470,6 +530,23 @@ const ProjectGraph = () => {
 
             <Divider sx={{ mb: 2 }} />
 
+            {selectedNode.nodeType === 'page' && (
+              <>
+                <Typography variant="subtitle2" color="textSecondary">Názov stránky</Typography>
+                <Typography variant="body1" mb={2}>{selectedNode.label}</Typography>
+
+                {selectedNode.data.url && (
+                  <>
+                    <Typography variant="subtitle2" color="textSecondary">Odkaz</Typography>
+                    <Typography variant="body2" mb={2}>
+                      <a href={selectedNode.data.url} target="_blank" rel="noopener noreferrer">
+                        Otvoriť v Confluence
+                      </a>
+                    </Typography>
+                  </>
+                )}
+              </>
+            )}
             {selectedNode.nodeType === 'issue' ? (
               <>
                 <Typography variant="subtitle2" color="textSecondary">

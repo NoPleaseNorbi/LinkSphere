@@ -13,6 +13,7 @@ import {
   Alert,
   Button,
   CardActionArea,
+  TextField
 } from '@mui/material';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
@@ -26,6 +27,7 @@ const TYPE_COLORS = {
 
 const Projects = () => {
   const navigate = useNavigate();
+  const [search, setSearch] = React.useState('');
   const [projects, setProjects] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
@@ -89,6 +91,11 @@ const Projects = () => {
       setLoading(false);
     }
   };
+
+  const filteredProjects = projects.filter(project =>
+    project.name.toLowerCase().includes(search.toLowerCase()) ||
+    project.key.toLowerCase().includes(search.toLowerCase())
+  );
 
   React.useEffect(() => {
     fetchProjects();
@@ -165,12 +172,21 @@ const Projects = () => {
           </Button>
         </Box>
 
+        <TextField
+          fullWidth
+          size="small"
+          placeholder="Hľadať podľa názvu alebo kľúča projektu..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          sx={{ mb: 2 }}
+        />
+
         <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-          {projects.length} {projects.length === 1 ? 'projekt' : 'projektov'} nájdených — Kliknite na projekt pre zobrazenie jeho grafu
+          {filteredProjects.length} {filteredProjects.length === 1 ? 'projekt' : 'projektov'} nájdených — Kliknite na projekt pre zobrazenie jeho grafu
         </Typography>
 
         <Grid container spacing={3}>
-          {projects.map((project) => (
+          {filteredProjects.map((project) => (
             <Grid key={project.id}>
               <Card
                 elevation={2}
