@@ -32,7 +32,7 @@ LinkSphere je nástroj na vizualizáciu vzťahov medzi Jira úlohami, používat
 ### 1. Klonovanie repozitára
 
 ```bash
-git clone <url-repozitara>
+git clone https://github.com/NoPleaseNorbi/LinkSphere
 cd LinkSphere
 ```
 
@@ -191,7 +191,7 @@ LinkSphere is a tool for visualizing relationships between Jira issues, users, a
 ### 1. Clone the Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/NoPleaseNorbi/LinkSphere
 cd LinkSphere
 ```
 
