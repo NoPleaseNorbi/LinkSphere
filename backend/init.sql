@@ -1,4 +1,4 @@
-CREATE TABLE jira_credentials (
+CREATE TABLE IF NOT EXISTS jira_credentials (
   id INTEGER PRIMARY KEY DEFAULT 1,
   email VARCHAR(255) NOT NULL,
   api_token TEXT NOT NULL,

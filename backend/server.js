@@ -1,9 +1,10 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./swagger');
 
-require("dotenv").config();
 const jiraRoutes = require("./routes/jiraRoutes");
 const databaseRoutes = require("./routes/databaseRoutes");
 

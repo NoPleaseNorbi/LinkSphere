@@ -1,6 +1,7 @@
 node_modules
 .env
-.env.development
 coverage
 reports
-build
+__tests__
+load-tests
+*.test.js

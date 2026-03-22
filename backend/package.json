@@ -4,10 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "load-test": "k6 run load-tests/all-tests.test.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "load-test": "k6 run load-tests/all-tests.test.js"
+    "test:report": "jest --coverage && start reports/test-report.html && start coverage/lcov-report/index.html"
   },
   "keywords": [],
   "author": "",
@@ -23,6 +24,7 @@
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
-    "jest": "^30.3.0"
+    "jest": "^30.3.0",
+    "jest-html-reporters": "^3.1.7"
   }
 }

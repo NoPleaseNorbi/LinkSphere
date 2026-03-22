@@ -69,7 +69,7 @@ export const options = {
 
 export function handleSummary(data) {
   return {
-    'load-tests/reports/summary.html': htmlReport(data),
+    '../reports/summary.html': htmlReport(data),
     stdout: textSummary(data, { indent: ' ', enableColors: true }),
   };
 }
