@@ -19,7 +19,7 @@ const options = {
       { name: 'Database', description: 'Neo4j graph data retrieval' },
     ],
   },
-  apis: ['./routes/*.js'], // points to your route files
+  apis: ['./routes/*.js'], // routes
 };
 
 module.exports = swaggerJsdoc(options);

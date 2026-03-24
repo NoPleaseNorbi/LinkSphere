@@ -41,7 +41,7 @@ const Settings = () => {
       ...prev,
       [name]: value
     }));
-    setError(''); // Clear error when user types
+    setError('');
   };
 
   const validateInputs = () => {
@@ -121,7 +121,7 @@ const Settings = () => {
         const saveProjectsRes = await fetch('http://localhost:5000/api/jira/project/save-graph', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ projectKey: project.key })  // ✅ pass each project key
+          body: JSON.stringify({ projectKey: project.key })  // pass each project key
         });
 
         if (!saveProjectsRes.ok) {

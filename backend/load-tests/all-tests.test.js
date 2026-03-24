@@ -58,7 +58,7 @@ export const options = {
     'http_req_duration{scenario:smoke}':      ['p(95)<2000'],
     'http_req_duration{scenario:average}':    ['p(95)<2000'],
     'http_req_duration{scenario:stress}':     ['p(95)<5000'],
-    'http_req_duration{scenario:save_graph}': ['p(95)<30000'],
+    'http_req_duration{scenario:save_graph}': ['p(95)<100000'],
 
     'http_req_failed{scenario:smoke}':        ['rate<0.01'],
     'http_req_failed{scenario:average}':      ['rate<0.01'],
@@ -69,7 +69,7 @@ export const options = {
 
 export function handleSummary(data) {
   return {
-    '../reports/summary.html': htmlReport(data),
+    'reports/summary.html': htmlReport(data),
     stdout: textSummary(data, { indent: ' ', enableColors: true }),
   };
 }

@@ -105,7 +105,6 @@ const Projects = () => {
     navigate(`/project/${projectId}/graph`);
   };
 
-  // ─── Loading ────────────────────────────────────────────
   if (loading) {
     return (
       <Container maxWidth="lg">
@@ -117,7 +116,6 @@ const Projects = () => {
     );
   }
 
-  // ─── Error ──────────────────────────────────────────────
   if (error) {
     return (
       <Container maxWidth="lg">
@@ -143,7 +141,6 @@ const Projects = () => {
     );
   }
 
-  // ─── Empty ──────────────────────────────────────────────
   if (projects.length === 0) {
     return (
       <Container maxWidth="lg">
@@ -159,7 +156,7 @@ const Projects = () => {
     );
   }
 
-  // ─── Projects ───────────────────────────────────────────
+
   return (
     <Container maxWidth="lg">
       <Box sx={{ my: 6 }}>

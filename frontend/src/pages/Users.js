@@ -61,7 +61,6 @@ const Users = () => {
     navigate(`/user/${accountId}/graph`);
   };
 
-  // ─── Loading ────────────────────────────────────────────
   if (loading) {
     return (
       <Container maxWidth="lg">
@@ -73,7 +72,6 @@ const Users = () => {
     );
   }
 
-  // ─── Error ──────────────────────────────────────────────
   if (error) {
     return (
       <Container maxWidth="lg">
@@ -96,7 +94,6 @@ const Users = () => {
     );
   }
 
-  // ─── Empty ──────────────────────────────────────────────
   if (users.length === 0) {
     return (
       <Container maxWidth="lg">
@@ -112,7 +109,6 @@ const Users = () => {
     );
   }
 
-  // ─── Users ───────────────────────────────────────────
   return (
     <Container maxWidth="lg">
       <Box sx={{ my: 6 }}>

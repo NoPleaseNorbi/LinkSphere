@@ -28,7 +28,7 @@ const About = () => {
           <Typography component="div">
             <ul>
               <li>Synchronizácia s Jira v reálnom čase</li>
-              <li>Interaktívna grafová vizualizácia úloh, epikov a závislostí</li>
+              <li>Interaktívna grafová vizualizácia úloh</li>
               <li>Pokročilé možnosti vyhľadávania a filtrovania</li>
               <li>Analytika a prehľady založené na grafe</li>
               <li>Používateľsky prívetivé rozhranie Material UI</li>

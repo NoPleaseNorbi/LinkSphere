@@ -29,7 +29,6 @@ import SearchIcon from '@mui/icons-material/Search';
 import { circular } from 'graphology-layout';
 import forceAtlas2 from 'graphology-layout-forceatlas2';
 
-// Outside the component, at the top of the file
 const PRIORITY_COLORS = {
   'Highest': '#c50000',
   'High':    '#f5584c',
@@ -290,8 +289,6 @@ const ProjectGraph = () => {
       } catch (err) {}
     });
 
-    // No layout computation here - positions already set above
-
     if (sigmaRef.current) sigmaRef.current.kill();
 
     const sigma = new Sigma(graph, containerRef.current, {
@@ -308,12 +305,11 @@ const ProjectGraph = () => {
 
     sigmaRef.current = sigma;
 
-    // Drag'n'drop
     let draggedNode = null;
     let isDragging = false;
 
     sigma.on('downNode', (e) => {
-      if (!dragModeRef.current) return; // ✅ ignore if not in drag mode
+      if (!dragModeRef.current) return; 
       isDragging = true;
       draggedNode = e.node;
       graph.setNodeAttribute(draggedNode, 'highlighted', true);
@@ -350,7 +346,6 @@ const ProjectGraph = () => {
     sigma.on('upNode', handleUp);
     sigma.on('upStage', handleUp);
 
-    // Handle node clicks - guard against drag
     sigma.on('clickNode', ({ node }) => {
       if (dragModeRef.current) return; // ignore if in drag mode
       const nodeData = graph.getNodeAttributes(node);
@@ -385,6 +380,7 @@ const ProjectGraph = () => {
           {projectId} - Projektový graf
         </Typography>
       </Box>    
+      
       {/* Loading State */}
       {loading && (
         <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
